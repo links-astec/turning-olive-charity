@@ -33,6 +33,11 @@ import {
   UploadCloud,
   Eye,
   Pencil,
+  Superscript,
+  Subscript,
+  IndentIncrease,
+  IndentDecrease,
+  ChevronDown,
 } from "lucide-react";
 import {
   type NewsletterBlock,
@@ -543,6 +548,20 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
   );
 
   const canSend = subject.trim().length > 0 && blocks.some(blockHasContent);
+
+  const plainText = useMemo(() => {
+    return blocks
+      .map((b) => {
+        if (b.type === "heading" || b.type === "quote" || b.type === "button") return b.text;
+        if (b.type === "paragraph") return b.html.replace(/<[^>]+>/g, " ");
+        return "";
+      })
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }, [blocks]);
+  const wordCount = plainText ? plainText.split(" ").length : 0;
+  const charCount = plainText.replace(/ /g, "").length;
   const activeBlock = blocks.find((b) => b.id === activeBlockId);
   const canAlign = !!activeBlock && activeBlock.type !== "divider" && activeBlock.type !== "spacer";
 
@@ -627,7 +646,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
     }
     // Color/highlight need CSS-based output (span+style) instead of legacy <font> tags;
     // every other command should keep producing plain semantic tags (<b>, <u>, <a>...).
-    if (command === "foreColor" || command === "hiliteColor") {
+    if (command === "foreColor" || command === "hiliteColor" || command === "fontSize") {
       document.execCommand("styleWithCSS", false, "true");
       document.execCommand(command, false, value);
       document.execCommand("styleWithCSS", false, "false");
@@ -816,11 +835,46 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
             />
             <LinkPopover onOpen={saveSelection} onInsert={(url) => execWithSavedSelection("createLink", url)} />
             <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
+            <div className="relative">
+              <select
+                defaultValue=""
+                onMouseDown={saveSelection}
+                onChange={(e) => {
+                  if (e.target.value) execWithSavedSelection("fontSize", e.target.value);
+                  e.target.value = "";
+                }}
+                title="Text size"
+                aria-label="Text size"
+                className="appearance-none rounded-md bg-transparent py-1.5 pl-2 pr-6 text-xs font-medium text-olive-700 outline-none transition-colors hover:bg-olive-100"
+              >
+                <option value="" disabled>
+                  Size
+                </option>
+                <option value="1">Small</option>
+                <option value="3">Normal</option>
+                <option value="5">Large</option>
+                <option value="6">Extra large</option>
+              </select>
+              <ChevronDown size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-olive-500" />
+            </div>
+            <RibbonButton label="Superscript" onClick={() => exec("superscript")}>
+              <Superscript size={15} />
+            </RibbonButton>
+            <RibbonButton label="Subscript" onClick={() => exec("subscript")}>
+              <Subscript size={15} />
+            </RibbonButton>
+            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
             <RibbonButton label="Bulleted list" onClick={() => exec("insertUnorderedList")}>
               <List size={15} />
             </RibbonButton>
             <RibbonButton label="Numbered list" onClick={() => exec("insertOrderedList")}>
               <ListOrdered size={15} />
+            </RibbonButton>
+            <RibbonButton label="Decrease indent" onClick={() => exec("outdent")}>
+              <IndentDecrease size={15} />
+            </RibbonButton>
+            <RibbonButton label="Increase indent" onClick={() => exec("indent")}>
+              <IndentIncrease size={15} />
             </RibbonButton>
             <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
             <RibbonButton
@@ -972,7 +1026,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                         value={block.url}
                         onChange={(e) => updateBlock({ ...block, url: e.target.value })}
                         placeholder="Paste an image link (https://...)"
-                        className="mt-2 w-full rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-olive-800 outline-none transition-colors hover:border-olive-200 focus:border-terracotta-400 focus:bg-cream-50"
+                        className="mt-2 w-full rounded-md bg-transparent px-1.5 py-1 text-sm text-olive-800 outline-none transition-colors hover:bg-olive-50 focus:bg-cream-100"
                       />
                       {uploadError?.id === block.id && (
                         <p className="mt-1 text-xs text-terracotta-600">{uploadError.message}</p>
@@ -1033,20 +1087,26 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                         />
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <select
-                          value={matchedPreset ? matchedPreset.url : "__custom__"}
-                          onChange={(e) =>
-                            updateBlock({ ...block, url: e.target.value === "__custom__" ? "" : e.target.value })
-                          }
-                          className="rounded-md border border-olive-300 bg-cream-100 px-2 py-1.5 text-xs font-medium text-olive-700 outline-none focus:border-terracotta-400"
-                        >
-                          <option value="__custom__">Custom link…</option>
-                          {SITE_LINKS.map((l) => (
-                            <option key={l.url} value={l.url}>
-                              {l.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={matchedPreset ? matchedPreset.url : "__custom__"}
+                            onChange={(e) =>
+                              updateBlock({ ...block, url: e.target.value === "__custom__" ? "" : e.target.value })
+                            }
+                            className="appearance-none rounded-full bg-olive-100 py-1.5 pl-3 pr-7 text-xs font-medium text-olive-700 outline-none transition-colors hover:bg-olive-200 focus:bg-olive-200"
+                          >
+                            <option value="__custom__">Custom link…</option>
+                            {SITE_LINKS.map((l) => (
+                              <option key={l.url} value={l.url}>
+                                {l.label}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            size={12}
+                            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-olive-500"
+                          />
+                        </div>
                         {!matchedPreset && (
                           <input
                             value={block.url}
@@ -1135,6 +1195,11 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
               })}
             </div>
           </div>
+
+          <p className="mt-2 px-1 text-xs text-olive-400">
+            {wordCount} word{wordCount === 1 ? "" : "s"} &middot; {charCount} character
+            {charCount === 1 ? "" : "s"}
+          </p>
 
           {stage === "error" && (
             <div className="mt-3 flex items-center gap-2 text-sm font-medium text-terracotta-600">

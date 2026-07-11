@@ -91,7 +91,11 @@ const ALLOWED_INLINE_TAGS = new Set([
   "OL",
   "LI",
   "DIV",
+  "SUP",
+  "SUB",
 ]);
+
+const SAFE_FONT_SIZE_RE = /^(xx-small|x-small|small|medium|large|x-large|xx-large)$/i;
 
 /** Strips a contentEditable block's HTML down to a small safe allowlist before it can reach an email. */
 export function sanitizeInlineHtml(html: string): string {
@@ -117,9 +121,10 @@ export function sanitizeInlineHtml(html: string): string {
         .map((p) => p.trim())
         .filter((prop) => {
           const [prop_, value] = prop.split(":").map((s) => s.trim());
-          return (
-            (prop_ === "color" || prop_ === "background-color") && value && SAFE_COLOR_VALUE_RE.test(value)
-          );
+          if (!prop_ || !value) return false;
+          if (prop_ === "color" || prop_ === "background-color") return SAFE_COLOR_VALUE_RE.test(value);
+          if (prop_ === "font-size") return SAFE_FONT_SIZE_RE.test(value);
+          return false;
         })
         .join(";");
       return safeProps ? `<span style="${escapeHtml(safeProps)}">` : "<span>";
