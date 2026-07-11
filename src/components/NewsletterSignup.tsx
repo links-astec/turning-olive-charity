@@ -3,15 +3,37 @@
 import { useState } from "react";
 import { Mail, Check } from "lucide-react";
 
+type Status = "idle" | "loading" | "subscribed" | "already" | "error";
+
 export default function NewsletterSignup() {
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    setSubmitted(true);
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || "Something went wrong. Please try again.");
+        setStatus("error");
+        return;
+      }
+      setStatus(data.alreadySubscribed ? "already" : "subscribed");
+    } catch {
+      setErrorMessage("Something went wrong. Please try again.");
+      setStatus("error");
+    }
   };
+
+  const done = status === "subscribed" || status === "already";
 
   return (
     <div className="rounded-3xl border border-olive-200/70 bg-cream-50 p-8 shadow-sm sm:p-10">
@@ -27,10 +49,12 @@ export default function NewsletterSignup() {
           straight to your inbox.
         </p>
 
-        {submitted ? (
+        {done ? (
           <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-olive-100 px-5 py-4 text-sm font-medium text-olive-800">
             <Check size={18} className="shrink-0 text-olive-600" />
-            Thanks for subscribing!
+            {status === "already"
+              ? "You're already on our list — thank you!"
+              : "Thanks for subscribing!"}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -44,11 +68,15 @@ export default function NewsletterSignup() {
             />
             <button
               type="submit"
-              className="shrink-0 rounded-full bg-terracotta-500 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:-translate-y-0.5 hover:bg-terracotta-600 hover:shadow-md"
+              disabled={status === "loading"}
+              className="shrink-0 rounded-full bg-terracotta-500 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:-translate-y-0.5 hover:bg-terracotta-600 hover:shadow-md disabled:opacity-60 disabled:hover:translate-y-0"
             >
-              Subscribe
+              {status === "loading" ? "Subscribing…" : "Subscribe"}
             </button>
           </form>
+        )}
+        {status === "error" && (
+          <p className="mt-3 text-sm font-medium text-terracotta-600">{errorMessage}</p>
         )}
       </div>
     </div>
