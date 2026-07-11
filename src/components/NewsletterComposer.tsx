@@ -19,11 +19,16 @@ import {
   Link as LinkIcon,
   Eye,
   Pencil,
+  Quote as QuoteIcon,
+  MoveVertical,
 } from "lucide-react";
 import {
   type NewsletterBlock,
+  type SpacerSize,
   createBlock,
   renderNewsletterHtml,
+  BRAND_COLORS,
+  TEXT_COLORS,
 } from "@/lib/newsletterTemplate";
 
 type Stage = "editing" | "reviewing" | "sending" | "sent" | "error";
@@ -38,10 +43,43 @@ function blockHasContent(block: NewsletterBlock): boolean {
       return block.url.trim().length > 0;
     case "button":
       return block.text.trim().length > 0 && block.url.trim().length > 0;
+    case "quote":
+      return block.text.trim().length > 0;
+    case "spacer":
     case "divider":
       return true;
   }
 }
+
+const BLOCK_DEFS: {
+  type: NewsletterBlock["type"];
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}[] = [
+  { type: "heading", label: "Heading", description: "A bold section title", icon: <HeadingIcon size={16} /> },
+  {
+    type: "paragraph",
+    label: "Paragraph",
+    description: "Text you can bold, italicize, or link",
+    icon: <Type size={16} />,
+  },
+  { type: "image", label: "Image", description: "A photo from a link", icon: <ImageIcon size={16} /> },
+  {
+    type: "button",
+    label: "Button",
+    description: "A clickable button, like “Donate Now”",
+    icon: <MousePointerClick size={16} />,
+  },
+  { type: "quote", label: "Quote", description: "A highlighted quote or callout", icon: <QuoteIcon size={16} /> },
+  {
+    type: "spacer",
+    label: "Spacer",
+    description: "Extra breathing room between sections",
+    icon: <MoveVertical size={16} />,
+  },
+  { type: "divider", label: "Divider", description: "A thin line to separate sections", icon: <Minus size={16} /> },
+];
 
 function EmailPreviewFrame({ html }: { html: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -90,6 +128,69 @@ function ToolbarButton({
     >
       {children}
     </button>
+  );
+}
+
+function ColorSwatchPicker({
+  value,
+  onChange,
+  options,
+  allowCustom = true,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  allowCustom?: boolean;
+}) {
+  const isPreset = options.some((o) => o.value.toLowerCase() === value.toLowerCase());
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          title={opt.label}
+          aria-label={opt.label}
+          onClick={() => onChange(opt.value)}
+          className={`h-7 w-7 shrink-0 rounded-full border-2 shadow-sm transition-transform hover:scale-110 ${
+            value.toLowerCase() === opt.value.toLowerCase()
+              ? "border-terracotta-500 scale-110"
+              : "border-white"
+          }`}
+          style={{ backgroundColor: opt.value }}
+        />
+      ))}
+      {allowCustom && (
+        <input
+          type="color"
+          value={/^#([0-9a-f]{6})$/i.test(value) ? value : "#000000"}
+          onChange={(e) => onChange(e.target.value)}
+          title="Custom color"
+          aria-label="Custom color"
+          className={`h-7 w-7 shrink-0 cursor-pointer rounded-full border-2 shadow-sm ${
+            !isPreset ? "border-terracotta-500" : "border-white"
+          }`}
+        />
+      )}
+    </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="text-xs font-semibold text-olive-700">{label}</label>
+      {children}
+      {hint && <p className="mt-1 text-xs text-olive-500">{hint}</p>}
+    </div>
   );
 }
 
@@ -156,6 +257,8 @@ function ParagraphEditor({
 
 function BlockShell({
   label,
+  description,
+  icon,
   onDelete,
   onMoveUp,
   onMoveDown,
@@ -164,6 +267,8 @@ function BlockShell({
   children,
 }: {
   label: string;
+  description: string;
+  icon: React.ReactNode;
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -172,12 +277,18 @@ function BlockShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-olive-200/70 bg-cream-50 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-olive-500">
-          {label}
-        </span>
-        <div className="flex items-center gap-1">
+    <div className="rounded-xl border border-olive-200/70 bg-cream-50 p-4 transition-shadow hover:shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-olive-800">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-olive-100 text-olive-700">
+            {icon}
+          </span>
+          <div>
+            <p className="text-sm font-semibold leading-tight text-olive-900">{label}</p>
+            <p className="text-xs leading-tight text-olive-500">{description}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             disabled={isFirst}
@@ -212,7 +323,13 @@ function BlockShell({
 }
 
 const fieldClass =
-  "w-full rounded-lg border border-olive-300 bg-cream-100 px-3 py-2 text-sm text-olive-950 outline-none transition-shadow focus:border-terracotta-500 focus:ring-4 focus:ring-terracotta-500/15";
+  "mt-1.5 w-full rounded-lg border border-olive-300 bg-cream-100 px-3 py-2 text-sm text-olive-950 outline-none transition-shadow focus:border-terracotta-500 focus:ring-4 focus:ring-terracotta-500/15";
+
+const SPACER_LABELS: { size: SpacerSize; label: string }[] = [
+  { size: "small", label: "Small" },
+  { size: "medium", label: "Medium" },
+  { size: "large", label: "Large" },
+];
 
 export default function NewsletterComposer({ subscriberCount }: { subscriberCount: number }) {
   const [subject, setSubject] = useState("");
@@ -353,16 +470,15 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
         You have <strong>{subscriberCount}</strong> subscriber{subscriberCount === 1 ? "" : "s"}.
       </div>
 
-      <label className="text-sm font-medium text-olive-800" htmlFor="subject">
-        Subject
-      </label>
-      <input
-        id="subject"
-        value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-        placeholder="What's this update about?"
-        className={`mt-2 ${fieldClass}`}
-      />
+      <Field label="Subject" hint="Shows up as the email's subject line in your reader's inbox.">
+        <input
+          id="subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="What's this update about?"
+          className={fieldClass}
+        />
+      </Field>
 
       <div className="mt-6 flex gap-2 lg:hidden">
         <button
@@ -393,7 +509,11 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
         <div className={mobileTab === "edit" ? "block" : "hidden lg:block"}>
           <div className="space-y-4">
             {blocks.map((block, i) => {
+              const def = BLOCK_DEFS.find((d) => d.type === block.type)!;
               const shellProps = {
+                label: def.label,
+                description: def.description,
+                icon: def.icon,
                 onDelete: () => deleteBlock(block.id),
                 onMoveUp: () => moveBlock(block.id, -1),
                 onMoveDown: () => moveBlock(block.id, 1),
@@ -403,19 +523,31 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
 
               if (block.type === "heading") {
                 return (
-                  <BlockShell key={block.id} label="Heading" {...shellProps}>
-                    <input
-                      value={block.text}
-                      onChange={(e) => updateBlock({ ...block, text: e.target.value })}
-                      placeholder="Section heading"
-                      className={fieldClass}
-                    />
+                  <BlockShell key={block.id} {...shellProps}>
+                    <Field label="Heading text">
+                      <input
+                        value={block.text}
+                        onChange={(e) => updateBlock({ ...block, text: e.target.value })}
+                        placeholder="Section heading"
+                        className={fieldClass}
+                      />
+                    </Field>
+                    <div className="mt-3">
+                      <label className="text-xs font-semibold text-olive-700">Text color</label>
+                      <div className="mt-1.5">
+                        <ColorSwatchPicker
+                          value={block.color}
+                          onChange={(color) => updateBlock({ ...block, color })}
+                          options={BRAND_COLORS}
+                        />
+                      </div>
+                    </div>
                   </BlockShell>
                 );
               }
               if (block.type === "paragraph") {
                 return (
-                  <BlockShell key={block.id} label="Paragraph" {...shellProps}>
+                  <BlockShell key={block.id} {...shellProps}>
                     <ParagraphEditor
                       html={block.html}
                       onChange={(nextHtml) => updateBlock({ ...block, html: nextHtml })}
@@ -425,19 +557,25 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
               }
               if (block.type === "image") {
                 return (
-                  <BlockShell key={block.id} label="Image" {...shellProps}>
-                    <input
-                      value={block.url}
-                      onChange={(e) => updateBlock({ ...block, url: e.target.value })}
-                      placeholder="Image URL (https://...)"
-                      className={fieldClass}
-                    />
-                    <input
-                      value={block.alt}
-                      onChange={(e) => updateBlock({ ...block, alt: e.target.value })}
-                      placeholder="Describe the image (for accessibility)"
-                      className={`mt-2 ${fieldClass}`}
-                    />
+                  <BlockShell key={block.id} {...shellProps}>
+                    <Field label="Image URL" hint="Paste a direct link to a photo — from your gallery or anywhere online.">
+                      <input
+                        value={block.url}
+                        onChange={(e) => updateBlock({ ...block, url: e.target.value })}
+                        placeholder="https://..."
+                        className={fieldClass}
+                      />
+                    </Field>
+                    <div className="mt-3">
+                      <Field label="Alt text" hint="A short description, read aloud for readers who can't see images.">
+                        <input
+                          value={block.alt}
+                          onChange={(e) => updateBlock({ ...block, alt: e.target.value })}
+                          placeholder="Describe the image"
+                          className={fieldClass}
+                        />
+                      </Field>
+                    </div>
                     {block.url.trim() && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -451,69 +589,127 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
               }
               if (block.type === "button") {
                 return (
-                  <BlockShell key={block.id} label="Button" {...shellProps}>
-                    <input
-                      value={block.text}
-                      onChange={(e) => updateBlock({ ...block, text: e.target.value })}
-                      placeholder="Button text, e.g. Donate Now"
-                      className={fieldClass}
-                    />
-                    <input
-                      value={block.url}
-                      onChange={(e) => updateBlock({ ...block, url: e.target.value })}
-                      placeholder="Button link (https://...)"
-                      className={`mt-2 ${fieldClass}`}
-                    />
+                  <BlockShell key={block.id} {...shellProps}>
+                    <Field label="Button text" hint="Keep it short and clear, like “Donate Now” or “Read More”.">
+                      <input
+                        value={block.text}
+                        onChange={(e) => updateBlock({ ...block, text: e.target.value })}
+                        placeholder="Donate Now"
+                        className={fieldClass}
+                      />
+                    </Field>
+                    <div className="mt-3">
+                      <Field label="Button link" hint="Where should this button take people?">
+                        <input
+                          value={block.url}
+                          onChange={(e) => updateBlock({ ...block, url: e.target.value })}
+                          placeholder="https://..."
+                          className={fieldClass}
+                        />
+                      </Field>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-olive-700">Button color</label>
+                        <div className="mt-1.5">
+                          <ColorSwatchPicker
+                            value={block.bgColor}
+                            onChange={(bgColor) => updateBlock({ ...block, bgColor })}
+                            options={BRAND_COLORS}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-olive-700">Text color</label>
+                        <div className="mt-1.5">
+                          <ColorSwatchPicker
+                            value={block.textColor}
+                            onChange={(textColor) => updateBlock({ ...block, textColor })}
+                            options={TEXT_COLORS}
+                            allowCustom={false}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </BlockShell>
+                );
+              }
+              if (block.type === "quote") {
+                return (
+                  <BlockShell key={block.id} {...shellProps}>
+                    <Field label="Quote text" hint="A short highlighted quote or callout — great for testimonials.">
+                      <textarea
+                        value={block.text}
+                        onChange={(e) => updateBlock({ ...block, text: e.target.value })}
+                        placeholder="“Turning Olive changed how we see our own community.”"
+                        rows={3}
+                        className={fieldClass}
+                      />
+                    </Field>
+                    <div className="mt-3">
+                      <label className="text-xs font-semibold text-olive-700">Accent color</label>
+                      <div className="mt-1.5">
+                        <ColorSwatchPicker
+                          value={block.accentColor}
+                          onChange={(accentColor) => updateBlock({ ...block, accentColor })}
+                          options={BRAND_COLORS}
+                        />
+                      </div>
+                    </div>
+                  </BlockShell>
+                );
+              }
+              if (block.type === "spacer") {
+                return (
+                  <BlockShell key={block.id} {...shellProps}>
+                    <label className="text-xs font-semibold text-olive-700">Amount of space</label>
+                    <div className="mt-1.5 flex gap-2">
+                      {SPACER_LABELS.map(({ size, label }) => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => updateBlock({ ...block, size })}
+                          className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                            block.size === size
+                              ? "bg-olive-800 text-cream-50"
+                              : "bg-olive-100 text-olive-700 hover:bg-olive-200"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </BlockShell>
                 );
               }
               return (
-                <BlockShell key={block.id} label="Divider" {...shellProps}>
-                  <p className="text-xs text-olive-500">A thin line to separate sections.</p>
+                <BlockShell key={block.id} {...shellProps}>
+                  <p className="text-xs text-olive-500">A thin line to separate sections. Nothing to edit here.</p>
                 </BlockShell>
               );
             })}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => addBlock("heading")}
-              className="inline-flex items-center gap-1.5 rounded-full border border-olive-300 px-3 py-1.5 text-xs font-semibold text-olive-700 transition-colors hover:bg-olive-100"
-            >
-              <HeadingIcon size={13} /> Heading
-            </button>
-            <button
-              type="button"
-              onClick={() => addBlock("paragraph")}
-              className="inline-flex items-center gap-1.5 rounded-full border border-olive-300 px-3 py-1.5 text-xs font-semibold text-olive-700 transition-colors hover:bg-olive-100"
-            >
-              <Type size={13} /> Paragraph
-            </button>
-            <button
-              type="button"
-              onClick={() => addBlock("image")}
-              className="inline-flex items-center gap-1.5 rounded-full border border-olive-300 px-3 py-1.5 text-xs font-semibold text-olive-700 transition-colors hover:bg-olive-100"
-            >
-              <ImageIcon size={13} /> Image
-            </button>
-            <button
-              type="button"
-              onClick={() => addBlock("button")}
-              className="inline-flex items-center gap-1.5 rounded-full border border-olive-300 px-3 py-1.5 text-xs font-semibold text-olive-700 transition-colors hover:bg-olive-100"
-            >
-              <MousePointerClick size={13} /> Button
-            </button>
-            <button
-              type="button"
-              onClick={() => addBlock("divider")}
-              className="inline-flex items-center gap-1.5 rounded-full border border-olive-300 px-3 py-1.5 text-xs font-semibold text-olive-700 transition-colors hover:bg-olive-100"
-            >
-              <Minus size={13} /> Divider
-            </button>
-            <span className="inline-flex items-center gap-1 pl-1 text-xs text-olive-400">
-              <Plus size={12} /> add a block
-            </span>
+          <div className="mt-5 rounded-xl border border-dashed border-olive-300 bg-cream-50 p-4">
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-olive-600">
+              <Plus size={13} /> Add to your newsletter
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {BLOCK_DEFS.map((def) => (
+                <button
+                  key={def.type}
+                  type="button"
+                  onClick={() => addBlock(def.type)}
+                  title={def.description}
+                  className="flex flex-col items-start gap-1 rounded-lg border border-olive-200 bg-cream-100 px-3 py-2 text-left transition-all hover:-translate-y-0.5 hover:border-terracotta-400 hover:shadow-sm"
+                >
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-olive-900">
+                    {def.icon} {def.label}
+                  </span>
+                  <span className="text-[11px] leading-snug text-olive-500">{def.description}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {stage === "error" && (

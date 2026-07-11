@@ -1,21 +1,41 @@
+export type SpacerSize = "small" | "medium" | "large";
+
 export type NewsletterBlock =
-  | { id: string; type: "heading"; text: string }
+  | { id: string; type: "heading"; text: string; color: string }
   | { id: string; type: "paragraph"; html: string }
   | { id: string; type: "image"; url: string; alt: string }
-  | { id: string; type: "button"; text: string; url: string }
+  | { id: string; type: "button"; text: string; url: string; bgColor: string; textColor: string }
+  | { id: string; type: "quote"; text: string; accentColor: string }
+  | { id: string; type: "spacer"; size: SpacerSize }
   | { id: string; type: "divider" };
+
+export const BRAND_COLORS = [
+  { label: "Olive", value: "#363b25" },
+  { label: "Moss", value: "#626d38" },
+  { label: "Terracotta", value: "#c9793f" },
+  { label: "Charcoal", value: "#1c1f13" },
+];
+
+export const TEXT_COLORS = [
+  { label: "Cream", value: "#fffdf9" },
+  { label: "Charcoal", value: "#1c1f13" },
+];
 
 export function createBlock(type: NewsletterBlock["type"]): NewsletterBlock {
   const id = Math.random().toString(36).slice(2, 10);
   switch (type) {
     case "heading":
-      return { id, type, text: "" };
+      return { id, type, text: "", color: "#1c1f13" };
     case "paragraph":
       return { id, type, html: "" };
     case "image":
       return { id, type, url: "", alt: "" };
     case "button":
-      return { id, type, text: "", url: "" };
+      return { id, type, text: "", url: "", bgColor: "#626d38", textColor: "#fffdf9" };
+    case "quote":
+      return { id, type, text: "", accentColor: "#c9793f" };
+    case "spacer":
+      return { id, type, size: "medium" };
     case "divider":
       return { id, type };
   }
@@ -31,6 +51,12 @@ function escapeHtml(value: string): string {
 
 function safeUrl(url: string): string {
   return /^(https?:|mailto:)/i.test(url.trim()) ? url.trim() : "#";
+}
+
+const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+function safeColor(color: string | undefined, fallback: string): string {
+  return color && HEX_RE.test(color) ? color : fallback;
 }
 
 const ALLOWED_INLINE_TAGS = new Set(["B", "STRONG", "I", "EM", "U", "BR", "A"]);
@@ -54,12 +80,15 @@ export function sanitizeInlineHtml(html: string): string {
   return out;
 }
 
+const SPACER_HEIGHTS: Record<SpacerSize, number> = { small: 12, medium: 24, large: 48 };
+
 function renderBlock(block: NewsletterBlock): string {
   switch (block.type) {
-    case "heading":
-      return block.text.trim()
-        ? `<h2 style="margin:28px 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:19px;color:#1c1f13;">${escapeHtml(block.text)}</h2>`
-        : "";
+    case "heading": {
+      if (!block.text.trim()) return "";
+      const color = safeColor(block.color, "#1c1f13");
+      return `<h2 style="margin:28px 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:19px;color:${color};">${escapeHtml(block.text)}</h2>`;
+    }
     case "paragraph": {
       const content = sanitizeInlineHtml(block.html).trim();
       return content
@@ -70,10 +99,19 @@ function renderBlock(block: NewsletterBlock): string {
       return block.url.trim()
         ? `<img src="${escapeHtml(safeUrl(block.url))}" alt="${escapeHtml(block.alt)}" style="max-width:100%;display:block;border-radius:10px;margin:0 0 20px;" />`
         : "";
-    case "button":
-      return block.text.trim()
-        ? `<div style="margin:24px 0;"><a href="${escapeHtml(safeUrl(block.url))}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#54622f;color:#faf7f0;padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">${escapeHtml(block.text)}</a></div>`
-        : "";
+    case "button": {
+      if (!block.text.trim()) return "";
+      const bg = safeColor(block.bgColor, "#626d38");
+      const fg = safeColor(block.textColor, "#fffdf9");
+      return `<div style="margin:24px 0;"><a href="${escapeHtml(safeUrl(block.url))}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:${bg};color:${fg};padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">${escapeHtml(block.text)}</a></div>`;
+    }
+    case "quote": {
+      if (!block.text.trim()) return "";
+      const accent = safeColor(block.accentColor, "#c9793f");
+      return `<blockquote style="margin:24px 0;padding:14px 22px;border-left:4px solid ${accent};font-style:italic;color:#3f4629;font-size:16px;line-height:1.7;">${escapeHtml(block.text)}</blockquote>`;
+    }
+    case "spacer":
+      return `<div style="height:${SPACER_HEIGHTS[block.size]}px;line-height:${SPACER_HEIGHTS[block.size]}px;font-size:1px;">&nbsp;</div>`;
     case "divider":
       return `<hr style="border:none;border-top:1px solid #e8ebd8;margin:24px 0;" />`;
   }
