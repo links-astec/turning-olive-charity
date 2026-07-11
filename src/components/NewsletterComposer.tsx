@@ -5,22 +5,23 @@ import {
   Send,
   CheckCircle2,
   AlertCircle,
-  Plus,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
+  Bold,
+  Italic,
+  Underline,
+  Link as LinkIcon,
   Heading as HeadingIcon,
   Type,
   Image as ImageIcon,
   MousePointerClick,
+  Quote as QuoteIcon,
   Minus,
-  Bold,
-  Italic,
-  Link as LinkIcon,
+  MoveVertical,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+  Palette,
   Eye,
   Pencil,
-  Quote as QuoteIcon,
-  MoveVertical,
 } from "lucide-react";
 import {
   type NewsletterBlock,
@@ -51,34 +52,20 @@ function blockHasContent(block: NewsletterBlock): boolean {
   }
 }
 
-const BLOCK_DEFS: {
-  type: NewsletterBlock["type"];
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-}[] = [
-  { type: "heading", label: "Heading", description: "A bold section title", icon: <HeadingIcon size={16} /> },
-  {
-    type: "paragraph",
-    label: "Paragraph",
-    description: "Text you can bold, italicize, or link",
-    icon: <Type size={16} />,
-  },
-  { type: "image", label: "Image", description: "A photo from a link", icon: <ImageIcon size={16} /> },
-  {
-    type: "button",
-    label: "Button",
-    description: "A clickable button, like “Donate Now”",
-    icon: <MousePointerClick size={16} />,
-  },
-  { type: "quote", label: "Quote", description: "A highlighted quote or callout", icon: <QuoteIcon size={16} /> },
-  {
-    type: "spacer",
-    label: "Spacer",
-    description: "Extra breathing room between sections",
-    icon: <MoveVertical size={16} />,
-  },
-  { type: "divider", label: "Divider", description: "A thin line to separate sections", icon: <Minus size={16} /> },
+const INSERTABLE: { type: NewsletterBlock["type"]; label: string; icon: React.ReactNode }[] = [
+  { type: "heading", label: "Heading", icon: <HeadingIcon size={15} /> },
+  { type: "paragraph", label: "Paragraph", icon: <Type size={15} /> },
+  { type: "image", label: "Image", icon: <ImageIcon size={15} /> },
+  { type: "button", label: "Button", icon: <MousePointerClick size={15} /> },
+  { type: "quote", label: "Quote", icon: <QuoteIcon size={15} /> },
+  { type: "divider", label: "Divider", icon: <Minus size={15} /> },
+  { type: "spacer", label: "Spacer", icon: <MoveVertical size={15} /> },
+];
+
+const SPACER_LABELS: { size: SpacerSize; label: string }[] = [
+  { size: "small", label: "S" },
+  { size: "medium", label: "M" },
+  { size: "large", label: "L" },
 ];
 
 function EmailPreviewFrame({ html }: { html: string }) {
@@ -108,7 +95,7 @@ function EmailPreviewFrame({ html }: { html: string }) {
   );
 }
 
-function ToolbarButton({
+function RibbonButton({
   onClick,
   children,
   label,
@@ -122,9 +109,34 @@ function ToolbarButton({
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      aria-label={label}
       title={label}
-      className="rounded-md border border-olive-200 bg-cream-50 p-1.5 text-olive-700 transition-colors hover:bg-olive-100 hover:text-olive-950"
+      aria-label={label}
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-olive-700 transition-colors hover:bg-olive-100 hover:text-olive-950"
+    >
+      {children}
+    </button>
+  );
+}
+
+function IconBtn({
+  onClick,
+  label,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  label: string;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      aria-label={label}
+      className="rounded p-1 text-olive-500 transition-colors hover:bg-olive-100 hover:text-olive-900 disabled:opacity-30 disabled:hover:bg-transparent"
     >
       {children}
     </button>
@@ -152,10 +164,8 @@ function ColorSwatchPicker({
           title={opt.label}
           aria-label={opt.label}
           onClick={() => onChange(opt.value)}
-          className={`h-7 w-7 shrink-0 rounded-full border-2 shadow-sm transition-transform hover:scale-110 ${
-            value.toLowerCase() === opt.value.toLowerCase()
-              ? "border-terracotta-500 scale-110"
-              : "border-white"
+          className={`h-6 w-6 shrink-0 rounded-full border-2 shadow-sm transition-transform hover:scale-110 ${
+            value.toLowerCase() === opt.value.toLowerCase() ? "border-terracotta-500 scale-110" : "border-white"
           }`}
           style={{ backgroundColor: opt.value }}
         />
@@ -167,7 +177,7 @@ function ColorSwatchPicker({
           onChange={(e) => onChange(e.target.value)}
           title="Custom color"
           aria-label="Custom color"
-          className={`h-7 w-7 shrink-0 cursor-pointer rounded-full border-2 shadow-sm ${
+          className={`h-6 w-6 shrink-0 cursor-pointer rounded-full border-2 shadow-sm ${
             !isPreset ? "border-terracotta-500" : "border-white"
           }`}
         />
@@ -176,20 +186,88 @@ function ColorSwatchPicker({
   );
 }
 
-function Field({
+function ColorPopoverButton({
   label,
-  hint,
-  children,
+  value,
+  onChange,
+  options,
+  allowCustom = true,
 }: {
   label: string;
-  hint?: string;
-  children: React.ReactNode;
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  allowCustom?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setOpen((o) => !o)}
+        title={label}
+        aria-label={label}
+        className="flex items-center gap-0.5 rounded p-1 text-olive-500 transition-colors hover:bg-olive-100 hover:text-olive-900"
+      >
+        <Palette size={13} />
+        <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ backgroundColor: value }} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-1 rounded-lg border border-olive-200 bg-white p-2 shadow-lg">
+          <ColorSwatchPicker
+            value={value}
+            onChange={(next) => {
+              onChange(next);
+              setOpen(false);
+            }}
+            options={options}
+            allowCustom={allowCustom}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BlockControls({
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+  extra,
+}: {
+  isFirst: boolean;
+  isLast: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDelete: () => void;
+  extra?: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="text-xs font-semibold text-olive-700">{label}</label>
-      {children}
-      {hint && <p className="mt-1 text-xs text-olive-500">{hint}</p>}
+    <div className="absolute -right-1 -top-1 z-10 flex items-center gap-0.5 rounded-md border border-olive-200/70 bg-cream-50/95 px-1 py-0.5 opacity-80 shadow-sm transition-opacity group-hover:opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+      {extra}
+      <IconBtn label="Move up" disabled={isFirst} onClick={onMoveUp}>
+        <ArrowUp size={13} />
+      </IconBtn>
+      <IconBtn label="Move down" disabled={isLast} onClick={onMoveDown}>
+        <ArrowDown size={13} />
+      </IconBtn>
+      <IconBtn label="Delete block" onClick={onDelete}>
+        <Trash2 size={13} />
+      </IconBtn>
     </div>
   );
 }
@@ -197,9 +275,17 @@ function Field({
 function ParagraphEditor({
   html,
   onChange,
+  onFocus,
+  onEnter,
+  onBackspaceEmpty,
+  registerRef,
 }: {
   html: string;
   onChange: (html: string) => void;
+  onFocus: () => void;
+  onEnter: () => void;
+  onBackspaceEmpty: () => void;
+  registerRef: (el: HTMLDivElement | null) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
@@ -212,124 +298,36 @@ function ParagraphEditor({
     }
   }, [html]);
 
-  const exec = (command: string, value?: string) => {
-    ref.current?.focus();
-    document.execCommand(command, false, value);
-    if (ref.current) onChange(ref.current.innerHTML);
-  };
-
   return (
-    <div>
-      <div className="mb-1.5 flex gap-1">
-        <ToolbarButton label="Bold" onClick={() => exec("bold")}>
-          <Bold size={13} />
-        </ToolbarButton>
-        <ToolbarButton label="Italic" onClick={() => exec("italic")}>
-          <Italic size={13} />
-        </ToolbarButton>
-        <ToolbarButton
-          label="Add link"
-          onClick={() => {
-            const url = window.prompt("Link URL (https://...)");
-            if (url) exec("createLink", url);
-          }}
-        >
-          <LinkIcon size={13} />
-        </ToolbarButton>
-      </div>
-      <div className="relative">
-        {isEmpty && (
-          <span className="pointer-events-none absolute left-3 top-2 text-sm text-olive-400">
-            Write a paragraph…
-          </span>
-        )}
-        <div
-          ref={ref}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={(e) => onChange(e.currentTarget.innerHTML)}
-          className="min-h-[90px] w-full rounded-lg border border-olive-300 bg-cream-100 px-3 py-2 text-sm leading-relaxed text-olive-950 outline-none transition-shadow focus:border-terracotta-500 focus:ring-4 focus:ring-terracotta-500/15"
-        />
-      </div>
+    <div className="relative">
+      {isEmpty && (
+        <span className="pointer-events-none absolute left-1 top-1.5 text-[15px] text-olive-300">
+          Type something, or use Insert above…
+        </span>
+      )}
+      <div
+        ref={(el) => {
+          ref.current = el;
+          registerRef(el);
+        }}
+        contentEditable
+        suppressContentEditableWarning
+        onFocus={onFocus}
+        onInput={(e) => onChange(e.currentTarget.innerHTML)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            onEnter();
+          } else if (e.key === "Backspace" && isEmpty) {
+            e.preventDefault();
+            onBackspaceEmpty();
+          }
+        }}
+        className="min-h-[28px] w-full px-1 py-1.5 text-[15px] leading-relaxed text-olive-900 outline-none"
+      />
     </div>
   );
 }
-
-function BlockShell({
-  label,
-  description,
-  icon,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-  isFirst,
-  isLast,
-  children,
-}: {
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-  onDelete: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  isFirst: boolean;
-  isLast: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-olive-200/70 bg-cream-50 p-4 transition-shadow hover:shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-olive-800">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-olive-100 text-olive-700">
-            {icon}
-          </span>
-          <div>
-            <p className="text-sm font-semibold leading-tight text-olive-900">{label}</p>
-            <p className="text-xs leading-tight text-olive-500">{description}</p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            disabled={isFirst}
-            onClick={onMoveUp}
-            aria-label="Move block up"
-            className="rounded-md p-1 text-olive-500 transition-colors hover:bg-olive-100 hover:text-olive-900 disabled:opacity-30 disabled:hover:bg-transparent"
-          >
-            <ArrowUp size={14} />
-          </button>
-          <button
-            type="button"
-            disabled={isLast}
-            onClick={onMoveDown}
-            aria-label="Move block down"
-            className="rounded-md p-1 text-olive-500 transition-colors hover:bg-olive-100 hover:text-olive-900 disabled:opacity-30 disabled:hover:bg-transparent"
-          >
-            <ArrowDown size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="Delete block"
-            className="rounded-md p-1 text-terracotta-500 transition-colors hover:bg-terracotta-500/10"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-const fieldClass =
-  "mt-1.5 w-full rounded-lg border border-olive-300 bg-cream-100 px-3 py-2 text-sm text-olive-950 outline-none transition-shadow focus:border-terracotta-500 focus:ring-4 focus:ring-terracotta-500/15";
-
-const SPACER_LABELS: { size: SpacerSize; label: string }[] = [
-  { size: "small", label: "Small" },
-  { size: "medium", label: "Medium" },
-  { size: "large", label: "Large" },
-];
 
 export default function NewsletterComposer({ subscriberCount }: { subscriberCount: number }) {
   const [subject, setSubject] = useState("");
@@ -337,6 +335,10 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
   const [stage, setStage] = useState<Stage>("editing");
   const [errorMessage, setErrorMessage] = useState("");
   const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const blockRefs = useRef<Record<string, HTMLElement | null>>({});
+  const pendingFocusId = useRef<string | null>(null);
+  const didAutoFocus = useRef(false);
 
   const html = useMemo(
     () => renderNewsletterHtml(subject.trim() || "Your subject line", blocks),
@@ -344,6 +346,22 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
   );
 
   const canSend = subject.trim().length > 0 && blocks.some(blockHasContent);
+
+  const registerBlockRef = (id: string) => (el: HTMLElement | null) => {
+    blockRefs.current[id] = el;
+    if (el && pendingFocusId.current === id) {
+      el.focus();
+      pendingFocusId.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (!didAutoFocus.current && blocks.length > 0) {
+      blockRefs.current[blocks[0].id]?.focus();
+      didAutoFocus.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateBlock = (updated: NewsletterBlock) => {
     setBlocks((bs) => bs.map((b) => (b.id === updated.id ? updated : b)));
@@ -364,14 +382,40 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
     });
   };
 
-  const addBlock = (type: NewsletterBlock["type"]) => {
-    setBlocks((bs) => [...bs, createBlock(type)]);
+  const insertBlockAfter = (afterId: string | null, type: NewsletterBlock["type"]) => {
+    const newBlock = createBlock(type);
+    setBlocks((bs) => {
+      const index = afterId ? bs.findIndex((b) => b.id === afterId) : bs.length - 1;
+      const insertAt = index === -1 ? bs.length : index + 1;
+      const next = [...bs];
+      next.splice(insertAt, 0, newBlock);
+      return next;
+    });
+    pendingFocusId.current = newBlock.id;
+  };
+
+  const handleParagraphBackspace = (id: string) => {
+    const index = blocks.findIndex((b) => b.id === id);
+    if (index <= 0) return;
+    const prev = blocks[index - 1];
+    setBlocks((bs) => bs.filter((b) => b.id !== id));
+    if (prev.type === "paragraph") pendingFocusId.current = prev.id;
+  };
+
+  const exec = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+  };
+
+  const insertLink = () => {
+    const url = window.prompt("Link URL (https://...)");
+    if (url) exec("createLink", url);
   };
 
   const reset = () => {
     setSubject("");
     setBlocks([createBlock("paragraph")]);
     setStage("editing");
+    didAutoFocus.current = false;
   };
 
   const handleConfirmSend = async () => {
@@ -432,7 +476,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
             <span className="text-olive-500">Subject:</span> {subject}
           </p>
         </div>
-        <div className="mt-4 h-[480px]">
+        <div className="mt-4 h-[480px] max-w-xl">
           <EmailPreviewFrame html={html} />
         </div>
 
@@ -470,24 +514,12 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
         You have <strong>{subscriberCount}</strong> subscriber{subscriberCount === 1 ? "" : "s"}.
       </div>
 
-      <Field label="Subject" hint="Shows up as the email's subject line in your reader's inbox.">
-        <input
-          id="subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="What's this update about?"
-          className={fieldClass}
-        />
-      </Field>
-
-      <div className="mt-6 flex gap-2 lg:hidden">
+      <div className="flex gap-2 lg:hidden">
         <button
           type="button"
           onClick={() => setMobileTab("edit")}
           className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-            mobileTab === "edit"
-              ? "bg-olive-800 text-cream-50"
-              : "bg-olive-100 text-olive-700 hover:bg-olive-200"
+            mobileTab === "edit" ? "bg-olive-800 text-cream-50" : "bg-olive-100 text-olive-700 hover:bg-olive-200"
           }`}
         >
           <Pencil size={14} /> Edit
@@ -496,219 +528,250 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
           type="button"
           onClick={() => setMobileTab("preview")}
           className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-            mobileTab === "preview"
-              ? "bg-olive-800 text-cream-50"
-              : "bg-olive-100 text-olive-700 hover:bg-olive-200"
+            mobileTab === "preview" ? "bg-olive-800 text-cream-50" : "bg-olive-100 text-olive-700 hover:bg-olive-200"
           }`}
         >
           <Eye size={14} /> Preview
         </button>
       </div>
 
-      <div className="mt-5 lg:grid lg:grid-cols-2 lg:gap-8">
+      <div className="mt-5 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-8">
         <div className={mobileTab === "edit" ? "block" : "hidden lg:block"}>
-          <div className="space-y-4">
-            {blocks.map((block, i) => {
-              const def = BLOCK_DEFS.find((d) => d.type === block.type)!;
-              const shellProps = {
-                label: def.label,
-                description: def.description,
-                icon: def.icon,
-                onDelete: () => deleteBlock(block.id),
-                onMoveUp: () => moveBlock(block.id, -1),
-                onMoveDown: () => moveBlock(block.id, 1),
-                isFirst: i === 0,
-                isLast: i === blocks.length - 1,
-              };
+          {/* Ribbon toolbar */}
+          <div className="sticky top-2 z-10 mb-4 flex flex-wrap items-center gap-0.5 rounded-xl border border-olive-200 bg-cream-50/95 px-2 py-1.5 shadow-sm backdrop-blur">
+            <RibbonButton label="Bold" onClick={() => exec("bold")}>
+              <Bold size={15} />
+            </RibbonButton>
+            <RibbonButton label="Italic" onClick={() => exec("italic")}>
+              <Italic size={15} />
+            </RibbonButton>
+            <RibbonButton label="Underline" onClick={() => exec("underline")}>
+              <Underline size={15} />
+            </RibbonButton>
+            <RibbonButton label="Insert link" onClick={insertLink}>
+              <LinkIcon size={15} />
+            </RibbonButton>
+            <span className="mx-1.5 h-5 w-px shrink-0 bg-olive-200" />
+            {INSERTABLE.map((def) => (
+              <RibbonButton key={def.type} label={`Insert ${def.label}`} onClick={() => insertBlockAfter(activeBlockId, def.type)}>
+                {def.icon}
+              </RibbonButton>
+            ))}
+          </div>
 
-              if (block.type === "heading") {
-                return (
-                  <BlockShell key={block.id} {...shellProps}>
-                    <Field label="Heading text">
+          {/* Document canvas */}
+          <div className="rounded-2xl border border-olive-200/70 bg-white p-6 shadow-sm sm:p-10">
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Subject line"
+              className="w-full border-none bg-transparent font-serif text-3xl font-semibold text-olive-950 outline-none placeholder:text-olive-300"
+            />
+            <p className="mb-6 mt-1 text-xs text-olive-400">
+              This is the subject line your reader sees in their inbox.
+            </p>
+
+            <div className="space-y-1">
+              {blocks.map((block, i) => {
+                const controlProps = {
+                  isFirst: i === 0,
+                  isLast: i === blocks.length - 1,
+                  onMoveUp: () => moveBlock(block.id, -1),
+                  onMoveDown: () => moveBlock(block.id, 1),
+                  onDelete: () => deleteBlock(block.id),
+                };
+                const activeRing = activeBlockId === block.id ? "ring-1 ring-terracotta-200" : "";
+
+                if (block.type === "heading") {
+                  return (
+                    <div key={block.id} className={`group relative rounded-md px-1 py-2 ${activeRing}`}>
+                      <BlockControls
+                        {...controlProps}
+                        extra={
+                          <ColorPopoverButton
+                            label="Heading color"
+                            value={block.color}
+                            onChange={(color) => updateBlock({ ...block, color })}
+                            options={BRAND_COLORS}
+                          />
+                        }
+                      />
                       <input
+                        ref={registerBlockRef(block.id)}
+                        onFocus={() => setActiveBlockId(block.id)}
                         value={block.text}
                         onChange={(e) => updateBlock({ ...block, text: e.target.value })}
-                        placeholder="Section heading"
-                        className={fieldClass}
+                        placeholder="Heading"
+                        style={{ color: block.color }}
+                        className="w-full border-none bg-transparent font-serif text-2xl font-semibold outline-none placeholder:text-olive-300"
                       />
-                    </Field>
-                    <div className="mt-3">
-                      <label className="text-xs font-semibold text-olive-700">Text color</label>
-                      <div className="mt-1.5">
-                        <ColorSwatchPicker
-                          value={block.color}
-                          onChange={(color) => updateBlock({ ...block, color })}
-                          options={BRAND_COLORS}
-                        />
-                      </div>
                     </div>
-                  </BlockShell>
-                );
-              }
-              if (block.type === "paragraph") {
-                return (
-                  <BlockShell key={block.id} {...shellProps}>
-                    <ParagraphEditor
-                      html={block.html}
-                      onChange={(nextHtml) => updateBlock({ ...block, html: nextHtml })}
-                    />
-                  </BlockShell>
-                );
-              }
-              if (block.type === "image") {
-                return (
-                  <BlockShell key={block.id} {...shellProps}>
-                    <Field label="Image URL" hint="Paste a direct link to a photo — from your gallery or anywhere online.">
+                  );
+                }
+
+                if (block.type === "paragraph") {
+                  return (
+                    <div key={block.id} className={`group relative rounded-md px-1 py-1 ${activeRing}`}>
+                      <BlockControls {...controlProps} />
+                      <ParagraphEditor
+                        html={block.html}
+                        onChange={(nextHtml) => updateBlock({ ...block, html: nextHtml })}
+                        onFocus={() => setActiveBlockId(block.id)}
+                        onEnter={() => insertBlockAfter(block.id, "paragraph")}
+                        onBackspaceEmpty={() => handleParagraphBackspace(block.id)}
+                        registerRef={registerBlockRef(block.id)}
+                      />
+                    </div>
+                  );
+                }
+
+                if (block.type === "image") {
+                  return (
+                    <div key={block.id} className={`group relative rounded-md px-1 py-2 ${activeRing}`}>
+                      <BlockControls {...controlProps} />
                       <input
+                        ref={registerBlockRef(block.id)}
+                        onFocus={() => setActiveBlockId(block.id)}
                         value={block.url}
                         onChange={(e) => updateBlock({ ...block, url: e.target.value })}
-                        placeholder="https://..."
-                        className={fieldClass}
+                        placeholder="Paste an image link (https://...)"
+                        className="w-full rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-olive-800 outline-none transition-colors hover:border-olive-200 focus:border-terracotta-400 focus:bg-cream-50"
                       />
-                    </Field>
-                    <div className="mt-3">
-                      <Field label="Alt text" hint="A short description, read aloud for readers who can't see images.">
-                        <input
-                          value={block.alt}
-                          onChange={(e) => updateBlock({ ...block, alt: e.target.value })}
-                          placeholder="Describe the image"
-                          className={fieldClass}
+                      {block.url.trim() && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={block.url}
+                          alt={block.alt}
+                          className="mt-2 max-h-56 w-full rounded-lg border border-olive-100 object-cover"
                         />
-                      </Field>
-                    </div>
-                    {block.url.trim() && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={block.url}
-                        alt=""
-                        className="mt-3 max-h-32 rounded-lg border border-olive-200 object-cover"
-                      />
-                    )}
-                  </BlockShell>
-                );
-              }
-              if (block.type === "button") {
-                return (
-                  <BlockShell key={block.id} {...shellProps}>
-                    <Field label="Button text" hint="Keep it short and clear, like “Donate Now” or “Read More”.">
+                      )}
                       <input
-                        value={block.text}
-                        onChange={(e) => updateBlock({ ...block, text: e.target.value })}
-                        placeholder="Donate Now"
-                        className={fieldClass}
+                        value={block.alt}
+                        onChange={(e) => updateBlock({ ...block, alt: e.target.value })}
+                        placeholder="Alt text, for readers who can't see the image"
+                        className="mt-1 w-full border-none bg-transparent px-1 text-xs text-olive-500 outline-none placeholder:text-olive-400"
                       />
-                    </Field>
-                    <div className="mt-3">
-                      <Field label="Button link" hint="Where should this button take people?">
+                    </div>
+                  );
+                }
+
+                if (block.type === "button") {
+                  return (
+                    <div key={block.id} className={`group relative rounded-md px-1 py-3 ${activeRing}`}>
+                      <BlockControls
+                        {...controlProps}
+                        extra={
+                          <>
+                            <ColorPopoverButton
+                              label="Button color"
+                              value={block.bgColor}
+                              onChange={(bgColor) => updateBlock({ ...block, bgColor })}
+                              options={BRAND_COLORS}
+                            />
+                            <ColorPopoverButton
+                              label="Button text color"
+                              value={block.textColor}
+                              onChange={(textColor) => updateBlock({ ...block, textColor })}
+                              options={TEXT_COLORS}
+                              allowCustom={false}
+                            />
+                          </>
+                        }
+                      />
+                      <div className="flex flex-wrap items-center gap-3">
+                        <input
+                          ref={registerBlockRef(block.id)}
+                          onFocus={() => setActiveBlockId(block.id)}
+                          value={block.text}
+                          onChange={(e) => updateBlock({ ...block, text: e.target.value })}
+                          placeholder="Button text"
+                          style={{ background: block.bgColor, color: block.textColor }}
+                          className="rounded-full px-5 py-2.5 text-sm font-semibold outline-none placeholder:opacity-70"
+                        />
                         <input
                           value={block.url}
                           onChange={(e) => updateBlock({ ...block, url: e.target.value })}
-                          placeholder="https://..."
-                          className={fieldClass}
+                          placeholder="https://... (where it links to)"
+                          className="min-w-[180px] flex-1 border-none bg-transparent text-sm text-olive-600 outline-none placeholder:text-olive-400"
                         />
-                      </Field>
+                      </div>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-semibold text-olive-700">Button color</label>
-                        <div className="mt-1.5">
-                          <ColorSwatchPicker
-                            value={block.bgColor}
-                            onChange={(bgColor) => updateBlock({ ...block, bgColor })}
+                  );
+                }
+
+                if (block.type === "quote") {
+                  return (
+                    <div key={block.id} className={`group relative rounded-md px-1 py-3 ${activeRing}`}>
+                      <BlockControls
+                        {...controlProps}
+                        extra={
+                          <ColorPopoverButton
+                            label="Accent color"
+                            value={block.accentColor}
+                            onChange={(accentColor) => updateBlock({ ...block, accentColor })}
                             options={BRAND_COLORS}
                           />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-olive-700">Text color</label>
-                        <div className="mt-1.5">
-                          <ColorSwatchPicker
-                            value={block.textColor}
-                            onChange={(textColor) => updateBlock({ ...block, textColor })}
-                            options={TEXT_COLORS}
-                            allowCustom={false}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </BlockShell>
-                );
-              }
-              if (block.type === "quote") {
-                return (
-                  <BlockShell key={block.id} {...shellProps}>
-                    <Field label="Quote text" hint="A short highlighted quote or callout — great for testimonials.">
+                        }
+                      />
                       <textarea
+                        ref={registerBlockRef(block.id)}
+                        onFocus={() => setActiveBlockId(block.id)}
                         value={block.text}
                         onChange={(e) => updateBlock({ ...block, text: e.target.value })}
-                        placeholder="“Turning Olive changed how we see our own community.”"
-                        rows={3}
-                        className={fieldClass}
+                        placeholder="Write a quote or callout…"
+                        rows={2}
+                        style={{ borderLeftColor: block.accentColor }}
+                        className="w-full resize-none border-l-4 bg-transparent pl-4 text-base italic leading-relaxed text-olive-800 outline-none placeholder:text-olive-300"
                       />
-                    </Field>
-                    <div className="mt-3">
-                      <label className="text-xs font-semibold text-olive-700">Accent color</label>
-                      <div className="mt-1.5">
-                        <ColorSwatchPicker
-                          value={block.accentColor}
-                          onChange={(accentColor) => updateBlock({ ...block, accentColor })}
-                          options={BRAND_COLORS}
-                        />
+                    </div>
+                  );
+                }
+
+                if (block.type === "spacer") {
+                  return (
+                    <div
+                      key={block.id}
+                      tabIndex={0}
+                      ref={registerBlockRef(block.id)}
+                      onFocus={() => setActiveBlockId(block.id)}
+                      className={`group relative flex items-center gap-2 rounded-md px-1 py-2 ${activeRing}`}
+                    >
+                      <BlockControls {...controlProps} />
+                      <MoveVertical size={13} className="text-olive-300" />
+                      <div className="flex gap-1">
+                        {SPACER_LABELS.map(({ size, label }) => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => updateBlock({ ...block, size })}
+                            title={`${label === "S" ? "Small" : label === "M" ? "Medium" : "Large"} space`}
+                            className={`h-6 w-6 rounded-full text-xs font-semibold transition-colors ${
+                              block.size === size
+                                ? "bg-olive-800 text-cream-50"
+                                : "bg-olive-100 text-olive-600 hover:bg-olive-200"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  </BlockShell>
-                );
-              }
-              if (block.type === "spacer") {
-                return (
-                  <BlockShell key={block.id} {...shellProps}>
-                    <label className="text-xs font-semibold text-olive-700">Amount of space</label>
-                    <div className="mt-1.5 flex gap-2">
-                      {SPACER_LABELS.map(({ size, label }) => (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() => updateBlock({ ...block, size })}
-                          className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                            block.size === size
-                              ? "bg-olive-800 text-cream-50"
-                              : "bg-olive-100 text-olive-700 hover:bg-olive-200"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </BlockShell>
-                );
-              }
-              return (
-                <BlockShell key={block.id} {...shellProps}>
-                  <p className="text-xs text-olive-500">A thin line to separate sections. Nothing to edit here.</p>
-                </BlockShell>
-              );
-            })}
-          </div>
+                  );
+                }
 
-          <div className="mt-5 rounded-xl border border-dashed border-olive-300 bg-cream-50 p-4">
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-olive-600">
-              <Plus size={13} /> Add to your newsletter
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {BLOCK_DEFS.map((def) => (
-                <button
-                  key={def.type}
-                  type="button"
-                  onClick={() => addBlock(def.type)}
-                  title={def.description}
-                  className="flex flex-col items-start gap-1 rounded-lg border border-olive-200 bg-cream-100 px-3 py-2 text-left transition-all hover:-translate-y-0.5 hover:border-terracotta-400 hover:shadow-sm"
-                >
-                  <span className="flex items-center gap-1.5 text-sm font-semibold text-olive-900">
-                    {def.icon} {def.label}
-                  </span>
-                  <span className="text-[11px] leading-snug text-olive-500">{def.description}</span>
-                </button>
-              ))}
+                return (
+                  <div
+                    key={block.id}
+                    tabIndex={0}
+                    ref={registerBlockRef(block.id)}
+                    onFocus={() => setActiveBlockId(block.id)}
+                    className={`group relative rounded-md px-1 py-3 ${activeRing}`}
+                  >
+                    <BlockControls {...controlProps} />
+                    <hr className="border-olive-200" />
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -734,7 +797,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
             <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-olive-500">
               <Eye size={13} /> Live preview
             </p>
-            <div className="h-[520px]">
+            <div className="h-[560px]">
               <EmailPreviewFrame html={html} />
             </div>
           </div>

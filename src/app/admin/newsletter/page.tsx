@@ -19,7 +19,7 @@ export default async function NewsletterAdminPage() {
   const subscriberCount = await getSubscriberCount();
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-16">
+    <div className="mx-auto max-w-6xl px-6 py-12 lg:py-16">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl font-medium text-olive-950">Send a Newsletter</h1>
