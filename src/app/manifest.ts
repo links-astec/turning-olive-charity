@@ -6,6 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Olive Charity",
     description: "Newsletter admin for Turning Olive Charity.",
     start_url: "/admin/newsletter",
+    scope: "/admin/",
     display: "standalone",
     background_color: "#faf7f0",
     theme_color: "#363b25",
