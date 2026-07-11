@@ -3,6 +3,7 @@ import { Button, ProgramIcon, SectionHeading } from "@/components/ui";
 import { PhotoPanel, OliveBranch } from "@/components/decor";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion";
 import NameChangeNotice from "@/components/NameChangeNotice";
+import NewsletterSignup from "@/components/NewsletterSignup";
 import { blogPosts, founderMessage, programs, siteInfo } from "@/lib/content";
 
 const pillars = [
@@ -202,6 +203,12 @@ export default function Home() {
             ))}
           </RevealGroup>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-6 py-24">
+        <Reveal>
+          <NewsletterSignup />
+        </Reveal>
       </section>
 
       {/* CTA */}

@@ -52,7 +52,7 @@ export type GalleryImage = {
   alt: string;
 };
 
-export const galleryImages: GalleryImage[] = Array.from({ length: 272 }, (_, i) => ({
+export const galleryImages: GalleryImage[] = Array.from({ length: 268 }, (_, i) => ({
   src: `/images/gallery/gallery-${String(i + 1).padStart(3, "0")}.jpg`,
   alt: "Turning Olive Charity project — community event",
 }));
