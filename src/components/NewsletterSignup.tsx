@@ -30,7 +30,7 @@ export default function NewsletterSignup() {
         {submitted ? (
           <div className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-olive-100 px-5 py-4 text-sm font-medium text-olive-800">
             <Check size={18} className="shrink-0 text-olive-600" />
-            Thanks — we&rsquo;ll add {email} as soon as our newsletter is live.
+            Thanks for subscribing!
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -50,10 +50,6 @@ export default function NewsletterSignup() {
             </button>
           </form>
         )}
-        <p className="mt-4 text-xs text-olive-500">
-          We&rsquo;re setting up our newsletter — sign up now and be the first to hear when it
-          launches.
-        </p>
       </div>
     </div>
   );
