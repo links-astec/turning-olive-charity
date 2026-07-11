@@ -1,11 +1,20 @@
 export type SpacerSize = "small" | "medium" | "large";
+export type BlockAlign = "left" | "center" | "right";
 
 export type NewsletterBlock =
-  | { id: string; type: "heading"; text: string; color: string }
-  | { id: string; type: "paragraph"; html: string }
-  | { id: string; type: "image"; url: string; alt: string }
-  | { id: string; type: "button"; text: string; url: string; bgColor: string; textColor: string }
-  | { id: string; type: "quote"; text: string; accentColor: string }
+  | { id: string; type: "heading"; text: string; color: string; align: BlockAlign }
+  | { id: string; type: "paragraph"; html: string; align: BlockAlign }
+  | { id: string; type: "image"; url: string; alt: string; align: BlockAlign }
+  | {
+      id: string;
+      type: "button";
+      text: string;
+      url: string;
+      bgColor: string;
+      textColor: string;
+      align: BlockAlign;
+    }
+  | { id: string; type: "quote"; text: string; accentColor: string; align: BlockAlign }
   | { id: string; type: "spacer"; size: SpacerSize }
   | { id: string; type: "divider" };
 
@@ -21,19 +30,25 @@ export const TEXT_COLORS = [
   { label: "Charcoal", value: "#1c1f13" },
 ];
 
+export const HIGHLIGHT_COLORS = [
+  { label: "Yellow", value: "#fdf0b0" },
+  { label: "Terracotta", value: "#f3d8c0" },
+  { label: "Moss", value: "#dbe3c4" },
+];
+
 export function createBlock(type: NewsletterBlock["type"]): NewsletterBlock {
   const id = Math.random().toString(36).slice(2, 10);
   switch (type) {
     case "heading":
-      return { id, type, text: "", color: "#1c1f13" };
+      return { id, type, text: "", color: "#1c1f13", align: "left" };
     case "paragraph":
-      return { id, type, html: "" };
+      return { id, type, html: "", align: "left" };
     case "image":
-      return { id, type, url: "", alt: "" };
+      return { id, type, url: "", alt: "", align: "left" };
     case "button":
-      return { id, type, text: "", url: "", bgColor: "#626d38", textColor: "#fffdf9" };
+      return { id, type, text: "", url: "", bgColor: "#626d38", textColor: "#fffdf9", align: "left" };
     case "quote":
-      return { id, type, text: "", accentColor: "#c9793f" };
+      return { id, type, text: "", accentColor: "#c9793f", align: "left" };
     case "spacer":
       return { id, type, size: "medium" };
     case "divider":
@@ -59,22 +74,62 @@ function safeColor(color: string | undefined, fallback: string): string {
   return color && HEX_RE.test(color) ? color : fallback;
 }
 
-const ALLOWED_INLINE_TAGS = new Set(["B", "STRONG", "I", "EM", "U", "BR", "A"]);
+const SAFE_COLOR_VALUE_RE = /^(#[0-9a-f]{3,8}|rgba?\([\d.,\s%]+\)|[a-z]+)$/i;
 
-/** Strips a contentEditable paragraph's HTML down to a small safe allowlist before it can reach an email. */
+const ALLOWED_INLINE_TAGS = new Set([
+  "B",
+  "STRONG",
+  "I",
+  "EM",
+  "U",
+  "S",
+  "STRIKE",
+  "BR",
+  "A",
+  "SPAN",
+  "UL",
+  "OL",
+  "LI",
+  "DIV",
+]);
+
+/** Strips a contentEditable block's HTML down to a small safe allowlist before it can reach an email. */
 export function sanitizeInlineHtml(html: string): string {
   let out = html.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "");
   out = out.replace(/<\/?([a-zA-Z0-9]+)([^>]*)>/g, (match, rawTag, attrs) => {
     const tag = String(rawTag).toUpperCase();
     const isClosing = match.startsWith("</");
     if (!ALLOWED_INLINE_TAGS.has(tag)) return "";
+
     if (tag === "A") {
       if (isClosing) return "</a>";
       const hrefMatch = /href\s*=\s*"([^"]*)"|href\s*=\s*'([^']*)'/i.exec(attrs);
       const href = safeUrl(hrefMatch ? hrefMatch[1] || hrefMatch[2] || "" : "");
       return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="color:#54622f;text-decoration:underline;">`;
     }
+
+    if (tag === "SPAN") {
+      if (isClosing) return "</span>";
+      const styleMatch = /style\s*=\s*"([^"]*)"|style\s*=\s*'([^']*)'/i.exec(attrs);
+      const styleStr = styleMatch ? styleMatch[1] || styleMatch[2] || "" : "";
+      const safeProps = styleStr
+        .split(";")
+        .map((p) => p.trim())
+        .filter((prop) => {
+          const [prop_, value] = prop.split(":").map((s) => s.trim());
+          return (
+            (prop_ === "color" || prop_ === "background-color") && value && SAFE_COLOR_VALUE_RE.test(value)
+          );
+        })
+        .join(";");
+      return safeProps ? `<span style="${escapeHtml(safeProps)}">` : "<span>";
+    }
+
     if (tag === "BR") return "<br>";
+    if (tag === "UL") return isClosing ? "</ul>" : `<ul style="margin:0 0 16px;padding-left:22px;">`;
+    if (tag === "OL") return isClosing ? "</ol>" : `<ol style="margin:0 0 16px;padding-left:22px;">`;
+    if (tag === "LI") return isClosing ? "</li>" : `<li style="margin:0 0 6px;line-height:1.6;">`;
+
     return isClosing ? `</${tag.toLowerCase()}>` : `<${tag.toLowerCase()}>`;
   });
   return out;
@@ -87,28 +142,30 @@ function renderBlock(block: NewsletterBlock): string {
     case "heading": {
       if (!block.text.trim()) return "";
       const color = safeColor(block.color, "#1c1f13");
-      return `<h2 style="margin:28px 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:19px;color:${color};">${escapeHtml(block.text)}</h2>`;
+      return `<h2 style="margin:28px 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:19px;color:${color};text-align:${block.align};">${escapeHtml(block.text)}</h2>`;
     }
     case "paragraph": {
       const content = sanitizeInlineHtml(block.html).trim();
       return content
-        ? `<p style="margin:0 0 16px;line-height:1.7;color:#3f4629;font-size:15px;">${content}</p>`
+        ? `<div style="margin:0 0 16px;line-height:1.7;color:#3f4629;font-size:15px;text-align:${block.align};">${content}</div>`
         : "";
     }
-    case "image":
-      return block.url.trim()
-        ? `<img src="${escapeHtml(safeUrl(block.url))}" alt="${escapeHtml(block.alt)}" style="max-width:100%;display:block;border-radius:10px;margin:0 0 20px;" />`
-        : "";
+    case "image": {
+      if (!block.url.trim()) return "";
+      const margin =
+        block.align === "center" ? "0 auto 20px" : block.align === "right" ? "0 0 20px auto" : "0 0 20px 0";
+      return `<img src="${escapeHtml(safeUrl(block.url))}" alt="${escapeHtml(block.alt)}" style="max-width:100%;display:block;border-radius:10px;margin:${margin};" />`;
+    }
     case "button": {
       if (!block.text.trim()) return "";
       const bg = safeColor(block.bgColor, "#626d38");
       const fg = safeColor(block.textColor, "#fffdf9");
-      return `<div style="margin:24px 0;"><a href="${escapeHtml(safeUrl(block.url))}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:${bg};color:${fg};padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">${escapeHtml(block.text)}</a></div>`;
+      return `<div style="margin:24px 0;text-align:${block.align};"><a href="${escapeHtml(safeUrl(block.url))}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:${bg};color:${fg};padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">${escapeHtml(block.text)}</a></div>`;
     }
     case "quote": {
       if (!block.text.trim()) return "";
       const accent = safeColor(block.accentColor, "#c9793f");
-      return `<blockquote style="margin:24px 0;padding:14px 22px;border-left:4px solid ${accent};font-style:italic;color:#3f4629;font-size:16px;line-height:1.7;">${escapeHtml(block.text)}</blockquote>`;
+      return `<blockquote style="margin:24px 0;padding:14px 22px;border-left:4px solid ${accent};font-style:italic;color:#3f4629;font-size:16px;line-height:1.7;text-align:${block.align};">${escapeHtml(block.text)}</blockquote>`;
     }
     case "spacer":
       return `<div style="height:${SPACER_HEIGHTS[block.size]}px;line-height:${SPACER_HEIGHTS[block.size]}px;font-size:1px;">&nbsp;</div>`;

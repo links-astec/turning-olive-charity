@@ -8,6 +8,7 @@ import {
   Bold,
   Italic,
   Underline,
+  Strikethrough,
   Link as LinkIcon,
   Heading as HeadingIcon,
   Type,
@@ -20,19 +21,43 @@ import {
   ArrowDown,
   Trash2,
   Palette,
+  Highlighter,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Undo2,
+  Redo2,
+  RemoveFormatting,
+  UploadCloud,
   Eye,
   Pencil,
 } from "lucide-react";
 import {
   type NewsletterBlock,
   type SpacerSize,
+  type BlockAlign,
   createBlock,
   renderNewsletterHtml,
   BRAND_COLORS,
   TEXT_COLORS,
+  HIGHLIGHT_COLORS,
 } from "@/lib/newsletterTemplate";
 
 type Stage = "editing" | "reviewing" | "sending" | "sent" | "error";
+
+const SITE_LINKS = [
+  { label: "Homepage", url: "https://turningolive.org/" },
+  { label: "About Us", url: "https://turningolive.org/about" },
+  { label: "Our Programs", url: "https://turningolive.org/programs" },
+  { label: "Get Involved / Donate", url: "https://turningolive.org/get-involved" },
+  { label: "Our Team", url: "https://turningolive.org/team" },
+  { label: "Blog", url: "https://turningolive.org/blog" },
+  { label: "Photo Gallery", url: "https://turningolive.org/gallery" },
+  { label: "Our Sponsors", url: "https://turningolive.org/sponsors" },
+  { label: "Contact Us", url: "https://turningolive.org/contact" },
+];
 
 function blockHasContent(block: NewsletterBlock): boolean {
   switch (block.type) {
@@ -50,6 +75,10 @@ function blockHasContent(block: NewsletterBlock): boolean {
     case "divider":
       return true;
   }
+}
+
+function justify(align: BlockAlign): string {
+  return align === "center" ? "center" : align === "right" ? "flex-end" : "flex-start";
 }
 
 const INSERTABLE: { type: NewsletterBlock["type"]; label: string; icon: React.ReactNode }[] = [
@@ -99,19 +128,26 @@ function RibbonButton({
   onClick,
   children,
   label,
+  active,
+  disabled,
 }: {
   onClick: () => void;
   children: React.ReactNode;
   label: string;
+  active?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
+      disabled={disabled}
       title={label}
       aria-label={label}
-      className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-olive-700 transition-colors hover:bg-olive-100 hover:text-olive-950"
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-1.5 transition-colors disabled:pointer-events-none disabled:opacity-30 ${
+        active ? "bg-olive-800 text-cream-50" : "text-olive-700 hover:bg-olive-100 hover:text-olive-950"
+      }`}
     >
       {children}
     </button>
@@ -186,6 +222,7 @@ function ColorSwatchPicker({
   );
 }
 
+/** Block-level color picker (heading text, button fill, quote accent) — just sets a plain field, no selection to preserve. */
 function ColorPopoverButton({
   label,
   value,
@@ -241,6 +278,144 @@ function ColorPopoverButton({
   );
 }
 
+/** Character-level color/highlight for selected text — must preserve the selection across the popover click. */
+function FormatColorPopover({
+  label,
+  icon,
+  options,
+  onOpen,
+  onPick,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  options: { label: string; value: string }[];
+  onOpen: () => void;
+  onPick: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          onOpen();
+        }}
+        onClick={() => setOpen((o) => !o)}
+        title={label}
+        aria-label={label}
+        className="inline-flex items-center rounded-md px-2 py-1.5 text-olive-700 transition-colors hover:bg-olive-100 hover:text-olive-950"
+      >
+        {icon}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 flex gap-1.5 rounded-lg border border-olive-200 bg-white p-2 shadow-lg">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              title={opt.label}
+              onClick={() => {
+                onPick(opt.value);
+                setOpen(false);
+              }}
+              className="h-6 w-6 rounded-full border-2 border-white shadow-sm transition-transform hover:scale-110"
+              style={{ backgroundColor: opt.value }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LinkPopover({
+  onOpen,
+  onInsert,
+}: {
+  onOpen: () => void;
+  onInsert: (url: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          onOpen();
+        }}
+        onClick={() => setOpen((o) => !o)}
+        title="Insert link"
+        aria-label="Insert link"
+        className="inline-flex items-center rounded-md px-2 py-1.5 text-olive-700 transition-colors hover:bg-olive-100 hover:text-olive-950"
+      >
+        <LinkIcon size={15} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-72 rounded-lg border border-olive-200 bg-white p-3 shadow-lg">
+          <p className="mb-1.5 text-xs font-semibold text-olive-700">Link to a page on the site</p>
+          <div className="mb-2 flex flex-wrap gap-1">
+            {SITE_LINKS.map((l) => (
+              <button
+                key={l.url}
+                type="button"
+                onClick={() => setUrl(l.url)}
+                className={`rounded-full px-2 py-1 text-[11px] font-medium transition-colors ${
+                  url === l.url ? "bg-olive-800 text-cream-50" : "bg-olive-100 text-olive-700 hover:bg-olive-200"
+                }`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Or paste any link (https://...)"
+            className="w-full rounded-md border border-olive-300 px-2 py-1.5 text-sm outline-none focus:border-terracotta-500"
+          />
+          <button
+            type="button"
+            disabled={!url.trim()}
+            onClick={() => {
+              onInsert(url.trim());
+              setOpen(false);
+              setUrl("");
+            }}
+            className="mt-2 w-full rounded-md bg-terracotta-500 px-3 py-1.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-terracotta-600 disabled:opacity-50"
+          >
+            Insert Link
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BlockControls({
   isFirst,
   isLast,
@@ -274,6 +449,7 @@ function BlockControls({
 
 function ParagraphEditor({
   html,
+  align,
   onChange,
   onFocus,
   onEnter,
@@ -281,6 +457,7 @@ function ParagraphEditor({
   registerRef,
 }: {
   html: string;
+  align: BlockAlign;
   onChange: (html: string) => void;
   onFocus: () => void;
   onEnter: () => void;
@@ -297,6 +474,19 @@ function ParagraphEditor({
       initialized.current = true;
     }
   }, [html]);
+
+  const isInsideList = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    let node: Node | null = sel.getRangeAt(0).startContainer;
+    while (node && node !== ref.current) {
+      if (node instanceof HTMLElement && (node.tagName === "LI" || node.tagName === "UL" || node.tagName === "OL")) {
+        return true;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  };
 
   return (
     <div className="relative">
@@ -316,6 +506,7 @@ function ParagraphEditor({
         onInput={(e) => onChange(e.currentTarget.innerHTML)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
+            if (isInsideList()) return;
             e.preventDefault();
             onEnter();
           } else if (e.key === "Backspace" && isEmpty) {
@@ -323,6 +514,7 @@ function ParagraphEditor({
             onBackspaceEmpty();
           }
         }}
+        style={{ textAlign: align }}
         className="min-h-[28px] w-full px-1 py-1.5 text-[15px] leading-relaxed text-olive-900 outline-none"
       />
     </div>
@@ -336,9 +528,14 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
   const [errorMessage, setErrorMessage] = useState("");
   const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<{ id: string; message: string } | null>(null);
   const blockRefs = useRef<Record<string, HTMLElement | null>>({});
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const pendingFocusId = useRef<string | null>(null);
   const didAutoFocus = useRef(false);
+  const savedRange = useRef<Range | null>(null);
+  const savedBlockId = useRef<string | null>(null);
 
   const html = useMemo(
     () => renderNewsletterHtml(subject.trim() || "Your subject line", blocks),
@@ -346,6 +543,8 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
   );
 
   const canSend = subject.trim().length > 0 && blocks.some(blockHasContent);
+  const activeBlock = blocks.find((b) => b.id === activeBlockId);
+  const canAlign = !!activeBlock && activeBlock.type !== "divider" && activeBlock.type !== "spacer";
 
   const registerBlockRef = (id: string) => (el: HTMLElement | null) => {
     blockRefs.current[id] = el;
@@ -402,13 +601,63 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
     if (prev.type === "paragraph") pendingFocusId.current = prev.id;
   };
 
+  const setAlign = (align: BlockAlign) => {
+    if (!activeBlock || activeBlock.type === "divider" || activeBlock.type === "spacer") return;
+    updateBlock({ ...activeBlock, align });
+  };
+
   const exec = (command: string, value?: string) => {
     document.execCommand(command, false, value);
   };
 
-  const insertLink = () => {
-    const url = window.prompt("Link URL (https://...)");
-    if (url) exec("createLink", url);
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    savedRange.current = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+    savedBlockId.current = activeBlockId;
+  };
+
+  const execWithSavedSelection = (command: string, value?: string) => {
+    const id = savedBlockId.current;
+    const el = id ? blockRefs.current[id] : null;
+    if (el) el.focus();
+    const sel = window.getSelection();
+    if (sel && savedRange.current) {
+      sel.removeAllRanges();
+      sel.addRange(savedRange.current);
+    }
+    // Color/highlight need CSS-based output (span+style) instead of legacy <font> tags;
+    // every other command should keep producing plain semantic tags (<b>, <u>, <a>...).
+    if (command === "foreColor" || command === "hiliteColor") {
+      document.execCommand("styleWithCSS", false, "true");
+      document.execCommand(command, false, value);
+      document.execCommand("styleWithCSS", false, "false");
+    } else {
+      document.execCommand(command, false, value);
+    }
+  };
+
+  const handleImageUpload = async (blockId: string, file: File | undefined) => {
+    if (!file) return;
+    setUploadingId(blockId);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        setUploadError({ id: blockId, message: data.error || "Upload failed. Please try again." });
+        return;
+      }
+      const block = blocks.find((b) => b.id === blockId);
+      if (block && block.type === "image") {
+        updateBlock({ ...block, url: data.url });
+      }
+    } catch {
+      setUploadError({ id: blockId, message: "Upload failed. Please try again." });
+    } finally {
+      setUploadingId(null);
+    }
   };
 
   const reset = () => {
@@ -548,12 +797,73 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
             <RibbonButton label="Underline" onClick={() => exec("underline")}>
               <Underline size={15} />
             </RibbonButton>
-            <RibbonButton label="Insert link" onClick={insertLink}>
-              <LinkIcon size={15} />
+            <RibbonButton label="Strikethrough" onClick={() => exec("strikeThrough")}>
+              <Strikethrough size={15} />
             </RibbonButton>
-            <span className="mx-1.5 h-5 w-px shrink-0 bg-olive-200" />
+            <FormatColorPopover
+              label="Text color"
+              icon={<Palette size={15} />}
+              options={BRAND_COLORS}
+              onOpen={saveSelection}
+              onPick={(v) => execWithSavedSelection("foreColor", v)}
+            />
+            <FormatColorPopover
+              label="Highlight"
+              icon={<Highlighter size={15} />}
+              options={HIGHLIGHT_COLORS}
+              onOpen={saveSelection}
+              onPick={(v) => execWithSavedSelection("hiliteColor", v)}
+            />
+            <LinkPopover onOpen={saveSelection} onInsert={(url) => execWithSavedSelection("createLink", url)} />
+            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
+            <RibbonButton label="Bulleted list" onClick={() => exec("insertUnorderedList")}>
+              <List size={15} />
+            </RibbonButton>
+            <RibbonButton label="Numbered list" onClick={() => exec("insertOrderedList")}>
+              <ListOrdered size={15} />
+            </RibbonButton>
+            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
+            <RibbonButton
+              label="Align left"
+              disabled={!canAlign}
+              active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "left"}
+              onClick={() => setAlign("left")}
+            >
+              <AlignLeft size={15} />
+            </RibbonButton>
+            <RibbonButton
+              label="Align center"
+              disabled={!canAlign}
+              active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "center"}
+              onClick={() => setAlign("center")}
+            >
+              <AlignCenter size={15} />
+            </RibbonButton>
+            <RibbonButton
+              label="Align right"
+              disabled={!canAlign}
+              active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "right"}
+              onClick={() => setAlign("right")}
+            >
+              <AlignRight size={15} />
+            </RibbonButton>
+            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
+            <RibbonButton label="Undo" onClick={() => exec("undo")}>
+              <Undo2 size={15} />
+            </RibbonButton>
+            <RibbonButton label="Redo" onClick={() => exec("redo")}>
+              <Redo2 size={15} />
+            </RibbonButton>
+            <RibbonButton label="Clear formatting" onClick={() => exec("removeFormat")}>
+              <RemoveFormatting size={15} />
+            </RibbonButton>
+            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
             {INSERTABLE.map((def) => (
-              <RibbonButton key={def.type} label={`Insert ${def.label}`} onClick={() => insertBlockAfter(activeBlockId, def.type)}>
+              <RibbonButton
+                key={def.type}
+                label={`Insert ${def.label}`}
+                onClick={() => insertBlockAfter(activeBlockId, def.type)}
+              >
                 {def.icon}
               </RibbonButton>
             ))}
@@ -602,7 +912,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                         value={block.text}
                         onChange={(e) => updateBlock({ ...block, text: e.target.value })}
                         placeholder="Heading"
-                        style={{ color: block.color }}
+                        style={{ color: block.color, textAlign: block.align }}
                         className="w-full border-none bg-transparent font-serif text-2xl font-semibold outline-none placeholder:text-olive-300"
                       />
                     </div>
@@ -615,6 +925,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                       <BlockControls {...controlProps} />
                       <ParagraphEditor
                         html={block.html}
+                        align={block.align}
                         onChange={(nextHtml) => updateBlock({ ...block, html: nextHtml })}
                         onFocus={() => setActiveBlockId(block.id)}
                         onEnter={() => insertBlockAfter(block.id, "paragraph")}
@@ -629,21 +940,52 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                   return (
                     <div key={block.id} className={`group relative rounded-md px-1 py-2 ${activeRing}`}>
                       <BlockControls {...controlProps} />
-                      <input
-                        ref={registerBlockRef(block.id)}
+                      <div
+                        tabIndex={0}
                         onFocus={() => setActiveBlockId(block.id)}
+                        ref={registerBlockRef(block.id)}
+                        className="flex flex-wrap items-center gap-2"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => fileInputRefs.current[block.id]?.click()}
+                          disabled={uploadingId === block.id}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-olive-100 px-3 py-1.5 text-xs font-semibold text-olive-700 transition-colors hover:bg-olive-200 disabled:opacity-50"
+                        >
+                          <UploadCloud size={13} /> {uploadingId === block.id ? "Uploading…" : "Upload from device"}
+                        </button>
+                        <span className="text-xs text-olive-400">or paste a link below</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          ref={(el) => {
+                            fileInputRefs.current[block.id] = el;
+                          }}
+                          onChange={(e) => {
+                            handleImageUpload(block.id, e.target.files?.[0]);
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+                      <input
                         value={block.url}
                         onChange={(e) => updateBlock({ ...block, url: e.target.value })}
                         placeholder="Paste an image link (https://...)"
-                        className="w-full rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-olive-800 outline-none transition-colors hover:border-olive-200 focus:border-terracotta-400 focus:bg-cream-50"
+                        className="mt-2 w-full rounded-md border border-transparent bg-transparent px-1 py-1 text-sm text-olive-800 outline-none transition-colors hover:border-olive-200 focus:border-terracotta-400 focus:bg-cream-50"
                       />
+                      {uploadError?.id === block.id && (
+                        <p className="mt-1 text-xs text-terracotta-600">{uploadError.message}</p>
+                      )}
                       {block.url.trim() && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={block.url}
-                          alt={block.alt}
-                          className="mt-2 max-h-56 w-full rounded-lg border border-olive-100 object-cover"
-                        />
+                        <div style={{ display: "flex", justifyContent: justify(block.align) }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={block.url}
+                            alt={block.alt}
+                            className="mt-2 max-h-56 rounded-lg border border-olive-100 object-cover"
+                          />
+                        </div>
                       )}
                       <input
                         value={block.alt}
@@ -656,6 +998,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                 }
 
                 if (block.type === "button") {
+                  const matchedPreset = SITE_LINKS.find((l) => l.url === block.url);
                   return (
                     <div key={block.id} className={`group relative rounded-md px-1 py-3 ${activeRing}`}>
                       <BlockControls
@@ -678,7 +1021,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                           </>
                         }
                       />
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div style={{ display: "flex", justifyContent: justify(block.align) }}>
                         <input
                           ref={registerBlockRef(block.id)}
                           onFocus={() => setActiveBlockId(block.id)}
@@ -688,12 +1031,30 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                           style={{ background: block.bgColor, color: block.textColor }}
                           className="rounded-full px-5 py-2.5 text-sm font-semibold outline-none placeholder:opacity-70"
                         />
-                        <input
-                          value={block.url}
-                          onChange={(e) => updateBlock({ ...block, url: e.target.value })}
-                          placeholder="https://... (where it links to)"
-                          className="min-w-[180px] flex-1 border-none bg-transparent text-sm text-olive-600 outline-none placeholder:text-olive-400"
-                        />
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <select
+                          value={matchedPreset ? matchedPreset.url : "__custom__"}
+                          onChange={(e) =>
+                            updateBlock({ ...block, url: e.target.value === "__custom__" ? "" : e.target.value })
+                          }
+                          className="rounded-md border border-olive-300 bg-cream-100 px-2 py-1.5 text-xs font-medium text-olive-700 outline-none focus:border-terracotta-400"
+                        >
+                          <option value="__custom__">Custom link…</option>
+                          {SITE_LINKS.map((l) => (
+                            <option key={l.url} value={l.url}>
+                              {l.label}
+                            </option>
+                          ))}
+                        </select>
+                        {!matchedPreset && (
+                          <input
+                            value={block.url}
+                            onChange={(e) => updateBlock({ ...block, url: e.target.value })}
+                            placeholder="https://..."
+                            className="min-w-[180px] flex-1 border-none bg-transparent text-sm text-olive-600 outline-none placeholder:text-olive-400"
+                          />
+                        )}
                       </div>
                     </div>
                   );
@@ -720,7 +1081,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                         onChange={(e) => updateBlock({ ...block, text: e.target.value })}
                         placeholder="Write a quote or callout…"
                         rows={2}
-                        style={{ borderLeftColor: block.accentColor }}
+                        style={{ borderLeftColor: block.accentColor, textAlign: block.align }}
                         className="w-full resize-none border-l-4 bg-transparent pl-4 text-base italic leading-relaxed text-olive-800 outline-none placeholder:text-olive-300"
                       />
                     </div>
