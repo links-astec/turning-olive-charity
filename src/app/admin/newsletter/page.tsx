@@ -1,4 +1,5 @@
 import NewsletterComposer from "@/components/NewsletterComposer";
+import LogoutButton from "@/components/LogoutButton";
 
 async function getSubscriberCount(): Promise<number> {
   try {
@@ -19,11 +20,16 @@ export default async function NewsletterAdminPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-3xl font-medium text-olive-950">Send a Newsletter</h1>
-      <p className="mt-2 text-olive-700">
-        Write your update below. It&rsquo;ll be sent to everyone who&rsquo;s signed up on the
-        website.
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-3xl font-medium text-olive-950">Send a Newsletter</h1>
+          <p className="mt-2 text-olive-700">
+            Write your update below. It&rsquo;ll be sent to everyone who&rsquo;s signed up on the
+            website.
+          </p>
+        </div>
+        <LogoutButton />
+      </div>
       <NewsletterComposer subscriberCount={subscriberCount} />
     </div>
   );

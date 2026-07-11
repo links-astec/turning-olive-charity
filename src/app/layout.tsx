@@ -70,6 +70,18 @@ export const metadata: Metadata = {
   verification: {
     google: "ecBVFDjj8RiKk1YQm85CjE4GLcA7N0ej64PVUnzeqP0",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Olive Charity",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#363b25",
 };
 
 export default function RootLayout({

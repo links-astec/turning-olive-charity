@@ -1,23 +1,28 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const expected = process.env.ADMIN_NEWSLETTER_PASSWORD;
+const PUBLIC_ADMIN_PATHS = ["/admin/login", "/api/admin/login"];
 
-  if (authHeader) {
-    const [, encoded] = authHeader.split(" ");
-    const decoded = Buffer.from(encoded, "base64").toString("utf-8");
-    const [, password] = decoded.split(":");
-    if (expected && password === expected) {
-      return NextResponse.next();
-    }
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (PUBLIC_ADMIN_PATHS.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next();
   }
 
-  return new NextResponse("Authentication required", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Newsletter Admin"' },
-  });
+  const session = request.cookies.get("admin_session")?.value;
+  const expected = process.env.ADMIN_SESSION_SECRET;
+  const authenticated = Boolean(expected) && session === expected;
+
+  if (authenticated) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  return NextResponse.redirect(new URL("/admin/login", request.url));
 }
 
 export const config = {
