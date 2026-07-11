@@ -18,6 +18,8 @@ export async function POST(request: Request) {
   const normalized = email.trim().toLowerCase();
   const brevoKey = process.env.BREVO_API_KEY;
 
+  const LIST_ID = 2;
+
   if (brevoKey) {
     const res = await fetch("https://api.brevo.com/v3/contacts", {
       method: "POST",
@@ -25,7 +27,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         "api-key": brevoKey,
       },
-      body: JSON.stringify({ email: normalized }),
+      body: JSON.stringify({ email: normalized, listIds: [LIST_ID] }),
     });
 
     if (res.status === 201) {
@@ -36,6 +38,14 @@ export async function POST(request: Request) {
     if (res.status === 400) {
       const body = await res.json().catch(() => ({}));
       if (body.code === "duplicate_parameter") {
+        await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(normalized)}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": brevoKey,
+          },
+          body: JSON.stringify({ listIds: [LIST_ID] }),
+        }).catch(() => {});
         return NextResponse.json({ alreadySubscribed: true });
       }
     }
