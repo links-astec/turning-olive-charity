@@ -37,7 +37,7 @@ export const siteInfo = {
   vision:
     "To create a sustainable, inclusive and empowered society where humanitarian, social and environmental challenges are transformed into opportunities for growth through capacity building, strategic support systems and economic empowerment for individuals and communities.",
   phone: "+233 57 606 0057",
-  email: "info@turningolivecharity.org",
+  email: "info@turningolive.org",
   location: "La, Accra, Ghana",
 };
 
