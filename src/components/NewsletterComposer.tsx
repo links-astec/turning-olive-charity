@@ -45,9 +45,11 @@ import {
   type BlockAlign,
   createBlock,
   renderNewsletterHtml,
-  BRAND_COLORS,
+  ALL_COLORS,
   TEXT_COLORS,
   HIGHLIGHT_COLORS,
+  FONT_FAMILIES,
+  FONT_SIZES,
 } from "@/lib/newsletterTemplate";
 
 type Stage = "editing" | "reviewing" | "sending" | "sent" | "error";
@@ -276,7 +278,7 @@ function ColorPopoverButton({
         <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ backgroundColor: value }} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-20 mt-1 rounded-lg border border-olive-200 bg-white p-2 shadow-lg">
+        <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-lg border border-olive-200 bg-white p-2 shadow-lg">
           <ColorSwatchPicker
             value={value}
             onChange={(next) => {
@@ -334,7 +336,7 @@ function FormatColorPopover({
         {icon}
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-20 mt-1 flex gap-1.5 rounded-lg border border-olive-200 bg-white p-2 shadow-lg">
+        <div className="absolute left-0 top-full z-20 mt-1 flex w-44 flex-wrap gap-1.5 rounded-lg border border-olive-200 bg-white p-2 shadow-lg">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -655,12 +657,45 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
     }
     // Color/highlight need CSS-based output (span+style) instead of legacy <font> tags;
     // every other command should keep producing plain semantic tags (<b>, <u>, <a>...).
-    if (command === "foreColor" || command === "hiliteColor" || command === "fontSize") {
+    if (command === "foreColor" || command === "hiliteColor") {
       document.execCommand("styleWithCSS", false, "true");
       document.execCommand(command, false, value);
       document.execCommand("styleWithCSS", false, "false");
     } else {
       document.execCommand(command, false, value);
+    }
+  };
+
+  /**
+   * execCommand("fontSize") only offers 7 legacy keyword sizes and execCommand("fontName")
+   * is unreliable across browsers, so exact pixel sizes and font families are applied by
+   * hand-wrapping the saved selection in a styled span instead.
+   */
+  const applyInlineStyleToSavedSelection = (styleText: string) => {
+    const id = savedBlockId.current;
+    const el = id ? blockRefs.current[id] : null;
+    if (el) el.focus();
+    const sel = window.getSelection();
+    if (!sel || !savedRange.current) return;
+    sel.removeAllRanges();
+    sel.addRange(savedRange.current);
+    if (sel.isCollapsed) return;
+
+    const range = sel.getRangeAt(0);
+    const span = document.createElement("span");
+    span.setAttribute("style", styleText);
+    try {
+      range.surroundContents(span);
+    } catch {
+      const contents = range.extractContents();
+      span.appendChild(contents);
+      range.insertNode(span);
+    }
+    sel.removeAllRanges();
+
+    const block = id ? blocks.find((b) => b.id === id) : undefined;
+    if (block && block.type === "paragraph" && el) {
+      updateBlock({ ...block, html: (el as HTMLElement).innerHTML });
     }
   };
 
@@ -841,7 +876,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
               <FormatColorPopover
                 label="Text color"
                 icon={<Palette size={15} />}
-                options={BRAND_COLORS}
+                options={ALL_COLORS}
                 onOpen={saveSelection}
                 onPick={(v) => execWithSavedSelection("foreColor", v)}
               />
@@ -856,8 +891,33 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                 <select
                   defaultValue=""
                   onMouseDown={saveSelection}
+                  onFocus={saveSelection}
                   onChange={(e) => {
-                    if (e.target.value) execWithSavedSelection("fontSize", e.target.value);
+                    if (e.target.value) applyInlineStyleToSavedSelection(`font-family:${e.target.value}`);
+                    e.target.value = "";
+                  }}
+                  title="Font"
+                  aria-label="Font"
+                  className="appearance-none rounded-md border-none bg-transparent py-1.5 pl-2 pr-6 text-xs font-medium text-olive-700 outline-none transition-colors hover:bg-olive-200"
+                >
+                  <option value="" disabled>
+                    Font
+                  </option>
+                  {FONT_FAMILIES.map((f) => (
+                    <option key={f.value} value={f.value}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-olive-500" />
+              </div>
+              <div className="relative">
+                <select
+                  defaultValue=""
+                  onMouseDown={saveSelection}
+                  onFocus={saveSelection}
+                  onChange={(e) => {
+                    if (e.target.value) applyInlineStyleToSavedSelection(`font-size:${e.target.value}px`);
                     e.target.value = "";
                   }}
                   title="Text size"
@@ -867,10 +927,11 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                   <option value="" disabled>
                     Size
                   </option>
-                  <option value="1">Small</option>
-                  <option value="3">Normal</option>
-                  <option value="5">Large</option>
-                  <option value="6">Extra large</option>
+                  {FONT_SIZES.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-olive-500" />
               </div>
@@ -959,11 +1020,10 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                   onMoveDown: () => moveBlock(block.id, 1),
                   onDelete: () => deleteBlock(block.id),
                 };
-                const activeRing = activeBlockId === block.id ? "ring-1 ring-terracotta-400/40" : "";
 
                 if (block.type === "heading") {
                   return (
-                    <div key={block.id} className={`group relative rounded-md px-1 py-2 ${activeRing}`}>
+                    <div key={block.id} className="group relative rounded-md px-1 py-2">
                       <BlockControls
                         {...controlProps}
                         extra={
@@ -971,7 +1031,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                             label="Heading color"
                             value={block.color}
                             onChange={(color) => updateBlock({ ...block, color })}
-                            options={BRAND_COLORS}
+                            options={ALL_COLORS}
                           />
                         }
                       />
@@ -990,7 +1050,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
 
                 if (block.type === "paragraph") {
                   return (
-                    <div key={block.id} className={`group relative rounded-md px-1 py-1 ${activeRing}`}>
+                    <div key={block.id} className="group relative rounded-md px-1 py-1">
                       <BlockControls {...controlProps} />
                       <ParagraphEditor
                         html={block.html}
@@ -1007,7 +1067,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
 
                 if (block.type === "image") {
                   return (
-                    <div key={block.id} className={`group relative rounded-md px-1 py-2 ${activeRing}`}>
+                    <div key={block.id} className="group relative rounded-md px-1 py-2">
                       <BlockControls {...controlProps} />
                       <div
                         tabIndex={0}
@@ -1069,7 +1129,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                 if (block.type === "button") {
                   const matchedPreset = SITE_LINKS.find((l) => l.url === block.url);
                   return (
-                    <div key={block.id} className={`group relative rounded-md px-1 py-3 ${activeRing}`}>
+                    <div key={block.id} className="group relative rounded-md px-1 py-3">
                       <BlockControls
                         {...controlProps}
                         extra={
@@ -1078,7 +1138,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                               label="Button color"
                               value={block.bgColor}
                               onChange={(bgColor) => updateBlock({ ...block, bgColor })}
-                              options={BRAND_COLORS}
+                              options={ALL_COLORS}
                             />
                             <ColorPopoverButton
                               label="Button text color"
@@ -1137,7 +1197,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
 
                 if (block.type === "quote") {
                   return (
-                    <div key={block.id} className={`group relative rounded-md px-1 py-3 ${activeRing}`}>
+                    <div key={block.id} className="group relative rounded-md px-1 py-3">
                       <BlockControls
                         {...controlProps}
                         extra={
@@ -1145,7 +1205,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                             label="Accent color"
                             value={block.accentColor}
                             onChange={(accentColor) => updateBlock({ ...block, accentColor })}
-                            options={BRAND_COLORS}
+                            options={ALL_COLORS}
                           />
                         }
                       />
@@ -1170,7 +1230,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                       tabIndex={0}
                       ref={registerBlockRef(block.id)}
                       onFocus={() => setActiveBlockId(block.id)}
-                      className={`group relative flex items-center gap-2 rounded-md px-1 py-2 ${activeRing}`}
+                      className="group relative flex items-center gap-2 rounded-md px-1 py-2"
                     >
                       <BlockControls {...controlProps} />
                       <MoveVertical size={13} className="text-olive-300" />
@@ -1201,7 +1261,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                     tabIndex={0}
                     ref={registerBlockRef(block.id)}
                     onFocus={() => setActiveBlockId(block.id)}
-                    className={`group relative rounded-md px-1 py-3 ${activeRing}`}
+                    className="group relative rounded-md px-1 py-3"
                   >
                     <BlockControls {...controlProps} />
                     <hr className="border-olive-200" />

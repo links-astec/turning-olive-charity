@@ -25,6 +25,25 @@ export const BRAND_COLORS = [
   { label: "Charcoal", value: "#1c1f13" },
 ];
 
+export const STANDARD_COLORS = [
+  { label: "Black", value: "#000000" },
+  { label: "Dark Gray", value: "#57543f" },
+  { label: "Gray", value: "#8a8570" },
+  { label: "Red", value: "#c0392b" },
+  { label: "Orange", value: "#d9822b" },
+  { label: "Gold", value: "#c9a227" },
+  { label: "Green", value: "#3f7d3a" },
+  { label: "Teal", value: "#2f8f80" },
+  { label: "Blue", value: "#2f6fa8" },
+  { label: "Navy", value: "#294970" },
+  { label: "Purple", value: "#7b4fa0" },
+  { label: "Pink", value: "#c2588a" },
+  { label: "Brown", value: "#7a5230" },
+  { label: "White", value: "#fffdf9" },
+];
+
+export const ALL_COLORS = [...BRAND_COLORS, ...STANDARD_COLORS];
+
 export const TEXT_COLORS = [
   { label: "Cream", value: "#fffdf9" },
   { label: "Charcoal", value: "#1c1f13" },
@@ -34,7 +53,20 @@ export const HIGHLIGHT_COLORS = [
   { label: "Yellow", value: "#fdf0b0" },
   { label: "Terracotta", value: "#f3d8c0" },
   { label: "Moss", value: "#dbe3c4" },
+  { label: "Sky", value: "#cfe3f0" },
+  { label: "Pink", value: "#f3d6e3" },
+  { label: "Gray", value: "#e3e1d8" },
 ];
+
+export const FONT_FAMILIES = [
+  { label: "Default", value: "Arial,Helvetica,sans-serif" },
+  { label: "Serif", value: "Georgia,'Times New Roman',serif" },
+  { label: "Classic", value: "'Times New Roman',Times,serif" },
+  { label: "Rounded", value: "Verdana,'Trebuchet MS',sans-serif" },
+  { label: "Monospace", value: "'Courier New',Courier,monospace" },
+];
+
+export const FONT_SIZES = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48];
 
 export function createBlock(type: NewsletterBlock["type"]): NewsletterBlock {
   const id = Math.random().toString(36).slice(2, 10);
@@ -95,7 +127,27 @@ const ALLOWED_INLINE_TAGS = new Set([
   "SUB",
 ]);
 
-const SAFE_FONT_SIZE_RE = /^(xx-small|x-small|small|medium|large|x-large|xx-large)$/i;
+const SAFE_FONT_SIZE_KEYWORDS = new Set([
+  "xx-small",
+  "x-small",
+  "small",
+  "medium",
+  "large",
+  "x-large",
+  "xx-large",
+]);
+
+function isSafeFontSize(value: string): boolean {
+  if (SAFE_FONT_SIZE_KEYWORDS.has(value.toLowerCase())) return true;
+  const match = /^(\d{1,3})px$/.exec(value);
+  if (!match) return false;
+  const px = parseInt(match[1], 10);
+  return px >= 8 && px <= 96;
+}
+
+// Charset allowlist rather than exact match, since browsers can reformat quoting/spacing
+// when serializing the style attribute back out of a contentEditable region.
+const SAFE_FONT_FAMILY_RE = /^[a-zA-Z0-9\s,'"-]{1,80}$/;
 
 /** Strips a contentEditable block's HTML down to a small safe allowlist before it can reach an email. */
 export function sanitizeInlineHtml(html: string): string {
@@ -123,7 +175,8 @@ export function sanitizeInlineHtml(html: string): string {
           const [prop_, value] = prop.split(":").map((s) => s.trim());
           if (!prop_ || !value) return false;
           if (prop_ === "color" || prop_ === "background-color") return SAFE_COLOR_VALUE_RE.test(value);
-          if (prop_ === "font-size") return SAFE_FONT_SIZE_RE.test(value);
+          if (prop_ === "font-size") return isSafeFontSize(value);
+          if (prop_ === "font-family") return SAFE_FONT_FAMILY_RE.test(value);
           return false;
         })
         .join(";");
