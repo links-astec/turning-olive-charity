@@ -159,6 +159,15 @@ function RibbonButton({
   );
 }
 
+function RibbonGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-1 border-r border-olive-200 px-2.5 py-1 last:border-r-0">
+      <div className="flex flex-wrap items-center justify-center gap-0.5">{children}</div>
+      <span className="text-[9px] font-semibold uppercase tracking-wider text-olive-400">{label}</span>
+    </div>
+  );
+}
+
 function IconBtn({
   onClick,
   label,
@@ -806,125 +815,131 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
       <div className="mt-5 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-8">
         <div className={mobileTab === "edit" ? "block" : "hidden lg:block"}>
           {/* Ribbon toolbar */}
-          <div className="sticky top-2 z-10 mb-4 flex flex-wrap items-center gap-0.5 rounded-xl border border-olive-200 bg-cream-50/95 px-2 py-1.5 shadow-sm backdrop-blur">
-            <RibbonButton label="Bold" onClick={() => exec("bold")}>
-              <Bold size={15} />
-            </RibbonButton>
-            <RibbonButton label="Italic" onClick={() => exec("italic")}>
-              <Italic size={15} />
-            </RibbonButton>
-            <RibbonButton label="Underline" onClick={() => exec("underline")}>
-              <Underline size={15} />
-            </RibbonButton>
-            <RibbonButton label="Strikethrough" onClick={() => exec("strikeThrough")}>
-              <Strikethrough size={15} />
-            </RibbonButton>
-            <FormatColorPopover
-              label="Text color"
-              icon={<Palette size={15} />}
-              options={BRAND_COLORS}
-              onOpen={saveSelection}
-              onPick={(v) => execWithSavedSelection("foreColor", v)}
-            />
-            <FormatColorPopover
-              label="Highlight"
-              icon={<Highlighter size={15} />}
-              options={HIGHLIGHT_COLORS}
-              onOpen={saveSelection}
-              onPick={(v) => execWithSavedSelection("hiliteColor", v)}
-            />
-            <LinkPopover onOpen={saveSelection} onInsert={(url) => execWithSavedSelection("createLink", url)} />
-            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
-            <div className="relative">
-              <select
-                defaultValue=""
-                onMouseDown={saveSelection}
-                onChange={(e) => {
-                  if (e.target.value) execWithSavedSelection("fontSize", e.target.value);
-                  e.target.value = "";
-                }}
-                title="Text size"
-                aria-label="Text size"
-                className="appearance-none rounded-md bg-transparent py-1.5 pl-2 pr-6 text-xs font-medium text-olive-700 outline-none transition-colors hover:bg-olive-100"
-              >
-                <option value="" disabled>
-                  Size
-                </option>
-                <option value="1">Small</option>
-                <option value="3">Normal</option>
-                <option value="5">Large</option>
-                <option value="6">Extra large</option>
-              </select>
-              <ChevronDown size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-olive-500" />
-            </div>
-            <RibbonButton label="Superscript" onClick={() => exec("superscript")}>
-              <Superscript size={15} />
-            </RibbonButton>
-            <RibbonButton label="Subscript" onClick={() => exec("subscript")}>
-              <Subscript size={15} />
-            </RibbonButton>
-            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
-            <RibbonButton label="Bulleted list" onClick={() => exec("insertUnorderedList")}>
-              <List size={15} />
-            </RibbonButton>
-            <RibbonButton label="Numbered list" onClick={() => exec("insertOrderedList")}>
-              <ListOrdered size={15} />
-            </RibbonButton>
-            <RibbonButton label="Decrease indent" onClick={() => exec("outdent")}>
-              <IndentDecrease size={15} />
-            </RibbonButton>
-            <RibbonButton label="Increase indent" onClick={() => exec("indent")}>
-              <IndentIncrease size={15} />
-            </RibbonButton>
-            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
-            <RibbonButton
-              label="Align left"
-              disabled={!canAlign}
-              active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "left"}
-              onClick={() => setAlign("left")}
-            >
-              <AlignLeft size={15} />
-            </RibbonButton>
-            <RibbonButton
-              label="Align center"
-              disabled={!canAlign}
-              active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "center"}
-              onClick={() => setAlign("center")}
-            >
-              <AlignCenter size={15} />
-            </RibbonButton>
-            <RibbonButton
-              label="Align right"
-              disabled={!canAlign}
-              active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "right"}
-              onClick={() => setAlign("right")}
-            >
-              <AlignRight size={15} />
-            </RibbonButton>
-            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
-            <RibbonButton label="Undo" onClick={() => exec("undo")}>
-              <Undo2 size={15} />
-            </RibbonButton>
-            <RibbonButton label="Redo" onClick={() => exec("redo")}>
-              <Redo2 size={15} />
-            </RibbonButton>
-            <RibbonButton label="Clear formatting" onClick={() => exec("removeFormat")}>
-              <RemoveFormatting size={15} />
-            </RibbonButton>
-            <span className="mx-1 h-5 w-px shrink-0 bg-olive-200" />
-            {INSERTABLE.map((def) => (
-              <RibbonButton
-                key={def.type}
-                label={`Insert ${def.label}`}
-                onClick={() => insertBlockAfter(activeBlockId, def.type)}
-              >
-                {def.icon}
+          <div className="sticky top-2 z-10 flex flex-wrap items-start rounded-t-2xl border border-b-0 border-olive-200 bg-cream-100 px-2 pt-1.5 shadow-sm">
+            <RibbonGroup label="Undo">
+              <RibbonButton label="Undo" onClick={() => exec("undo")}>
+                <Undo2 size={15} />
               </RibbonButton>
-            ))}
+              <RibbonButton label="Redo" onClick={() => exec("redo")}>
+                <Redo2 size={15} />
+              </RibbonButton>
+            </RibbonGroup>
+
+            <RibbonGroup label="Font">
+              <RibbonButton label="Bold" onClick={() => exec("bold")}>
+                <Bold size={15} />
+              </RibbonButton>
+              <RibbonButton label="Italic" onClick={() => exec("italic")}>
+                <Italic size={15} />
+              </RibbonButton>
+              <RibbonButton label="Underline" onClick={() => exec("underline")}>
+                <Underline size={15} />
+              </RibbonButton>
+              <RibbonButton label="Strikethrough" onClick={() => exec("strikeThrough")}>
+                <Strikethrough size={15} />
+              </RibbonButton>
+              <FormatColorPopover
+                label="Text color"
+                icon={<Palette size={15} />}
+                options={BRAND_COLORS}
+                onOpen={saveSelection}
+                onPick={(v) => execWithSavedSelection("foreColor", v)}
+              />
+              <FormatColorPopover
+                label="Highlight"
+                icon={<Highlighter size={15} />}
+                options={HIGHLIGHT_COLORS}
+                onOpen={saveSelection}
+                onPick={(v) => execWithSavedSelection("hiliteColor", v)}
+              />
+              <div className="relative">
+                <select
+                  defaultValue=""
+                  onMouseDown={saveSelection}
+                  onChange={(e) => {
+                    if (e.target.value) execWithSavedSelection("fontSize", e.target.value);
+                    e.target.value = "";
+                  }}
+                  title="Text size"
+                  aria-label="Text size"
+                  className="appearance-none rounded-md border-none bg-transparent py-1.5 pl-2 pr-6 text-xs font-medium text-olive-700 outline-none transition-colors hover:bg-olive-200"
+                >
+                  <option value="" disabled>
+                    Size
+                  </option>
+                  <option value="1">Small</option>
+                  <option value="3">Normal</option>
+                  <option value="5">Large</option>
+                  <option value="6">Extra large</option>
+                </select>
+                <ChevronDown size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-olive-500" />
+              </div>
+              <RibbonButton label="Superscript" onClick={() => exec("superscript")}>
+                <Superscript size={15} />
+              </RibbonButton>
+              <RibbonButton label="Subscript" onClick={() => exec("subscript")}>
+                <Subscript size={15} />
+              </RibbonButton>
+              <RibbonButton label="Clear formatting" onClick={() => exec("removeFormat")}>
+                <RemoveFormatting size={15} />
+              </RibbonButton>
+            </RibbonGroup>
+
+            <RibbonGroup label="Paragraph">
+              <RibbonButton label="Bulleted list" onClick={() => exec("insertUnorderedList")}>
+                <List size={15} />
+              </RibbonButton>
+              <RibbonButton label="Numbered list" onClick={() => exec("insertOrderedList")}>
+                <ListOrdered size={15} />
+              </RibbonButton>
+              <RibbonButton label="Decrease indent" onClick={() => exec("outdent")}>
+                <IndentDecrease size={15} />
+              </RibbonButton>
+              <RibbonButton label="Increase indent" onClick={() => exec("indent")}>
+                <IndentIncrease size={15} />
+              </RibbonButton>
+              <RibbonButton
+                label="Align left"
+                disabled={!canAlign}
+                active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "left"}
+                onClick={() => setAlign("left")}
+              >
+                <AlignLeft size={15} />
+              </RibbonButton>
+              <RibbonButton
+                label="Align center"
+                disabled={!canAlign}
+                active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "center"}
+                onClick={() => setAlign("center")}
+              >
+                <AlignCenter size={15} />
+              </RibbonButton>
+              <RibbonButton
+                label="Align right"
+                disabled={!canAlign}
+                active={canAlign && (activeBlock as { align?: BlockAlign })?.align === "right"}
+                onClick={() => setAlign("right")}
+              >
+                <AlignRight size={15} />
+              </RibbonButton>
+            </RibbonGroup>
+
+            <RibbonGroup label="Insert">
+              <LinkPopover onOpen={saveSelection} onInsert={(url) => execWithSavedSelection("createLink", url)} />
+              {INSERTABLE.map((def) => (
+                <RibbonButton
+                  key={def.type}
+                  label={`Insert ${def.label}`}
+                  onClick={() => insertBlockAfter(activeBlockId, def.type)}
+                >
+                  {def.icon}
+                </RibbonButton>
+              ))}
+            </RibbonGroup>
           </div>
 
           {/* Document canvas */}
-          <div className="rounded-2xl border border-olive-200/70 bg-white p-6 shadow-sm sm:p-10">
+          <div className="rounded-b-2xl border border-olive-200/70 bg-white p-6 shadow-sm sm:p-10">
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
@@ -1026,7 +1041,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                         value={block.url}
                         onChange={(e) => updateBlock({ ...block, url: e.target.value })}
                         placeholder="Paste an image link (https://...)"
-                        className="mt-2 w-full rounded-md bg-transparent px-1.5 py-1 text-sm text-olive-800 outline-none transition-colors hover:bg-olive-50 focus:bg-cream-100"
+                        className="mt-2 w-full rounded-md border-none bg-transparent px-1.5 py-1 text-sm text-olive-800 outline-none transition-colors hover:bg-olive-50 focus:bg-cream-100"
                       />
                       {uploadError?.id === block.id && (
                         <p className="mt-1 text-xs text-terracotta-600">{uploadError.message}</p>
@@ -1083,7 +1098,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                           onChange={(e) => updateBlock({ ...block, text: e.target.value })}
                           placeholder="Button text"
                           style={{ background: block.bgColor, color: block.textColor }}
-                          className="rounded-full px-5 py-2.5 text-sm font-semibold outline-none placeholder:opacity-70"
+                          className="rounded-full border-none px-5 py-2.5 text-sm font-semibold outline-none placeholder:opacity-70"
                         />
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -1093,7 +1108,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                             onChange={(e) =>
                               updateBlock({ ...block, url: e.target.value === "__custom__" ? "" : e.target.value })
                             }
-                            className="appearance-none rounded-full bg-olive-100 py-1.5 pl-3 pr-7 text-xs font-medium text-olive-700 outline-none transition-colors hover:bg-olive-200 focus:bg-olive-200"
+                            className="appearance-none rounded-full border-none bg-olive-100 py-1.5 pl-3 pr-7 text-xs font-medium text-olive-700 outline-none transition-colors hover:bg-olive-200 focus:bg-olive-200"
                           >
                             <option value="__custom__">Custom link…</option>
                             {SITE_LINKS.map((l) => (
@@ -1142,7 +1157,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                         placeholder="Write a quote or callout…"
                         rows={2}
                         style={{ borderLeftColor: block.accentColor, textAlign: block.align }}
-                        className="w-full resize-none border-l-4 bg-transparent pl-4 text-base italic leading-relaxed text-olive-800 outline-none placeholder:text-olive-300"
+                        className="w-full resize-none border-0 border-l-4 bg-transparent pl-4 text-base italic leading-relaxed text-olive-800 outline-none placeholder:text-olive-300"
                       />
                     </div>
                   );

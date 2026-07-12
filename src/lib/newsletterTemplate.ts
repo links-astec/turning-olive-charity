@@ -179,21 +179,52 @@ function renderBlock(block: NewsletterBlock): string {
   }
 }
 
+function plainTextOf(block: NewsletterBlock): string {
+  if (block.type === "heading" || block.type === "quote" || block.type === "button") return block.text;
+  if (block.type === "paragraph") return block.html.replace(/<[^>]+>/g, " ");
+  return "";
+}
+
+function buildPreheader(blocks: NewsletterBlock[]): string {
+  const text = blocks
+    .map(plainTextOf)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return escapeHtml(text.slice(0, 140));
+}
+
 export function renderNewsletterHtml(subject: string, blocks: NewsletterBlock[]): string {
   const body = blocks.map(renderBlock).join("\n");
-  return `<div style="background:#faf7f0;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;background:#fffdf9;border-radius:16px;overflow:hidden;border:1px solid #e8ebd8;">
-      <div style="background:#363b25;padding:24px 32px;">
-        <span style="color:#faf7f0;font-size:18px;font-weight:bold;">Turning Olive Charity</span>
+  const preheader = buildPreheader(blocks);
+
+  return `<div style="background:#efe9da;padding:40px 16px;font-family:Georgia,'Times New Roman',serif;">
+    <span style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;">${preheader}</span>
+    <div style="max-width:600px;margin:0 auto;">
+      <div style="height:6px;border-radius:10px 10px 0 0;background:linear-gradient(90deg,#c9793f,#dd9a63,#7c8a48);"></div>
+      <div style="background:#fffdf9;border-left:1px solid #e9dcc0;border-right:1px solid #e9dcc0;">
+        <div style="padding:28px 40px 20px;text-align:center;border-bottom:1px solid #f3ecdd;">
+          <img src="https://turningolive.org/logo-icon.png" width="40" height="40" alt="" style="display:inline-block;vertical-align:middle;margin-right:10px;" />
+          <img src="https://turningolive.org/logo-wordmark.png" width="150" alt="Turning Olive Charity" style="display:inline-block;vertical-align:middle;" />
+        </div>
+        <div style="padding:40px 40px 12px;">
+          <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#c9793f;">Newsletter</p>
+          <h1 style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.25;color:#1c1f13;">${escapeHtml(subject)}</h1>
+          <div style="font-family:Arial,Helvetica,sans-serif;padding-bottom:24px;">
+            ${body}
+          </div>
+        </div>
       </div>
-      <div style="padding:32px;">
-        <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#1c1f13;">${escapeHtml(subject)}</h1>
-        ${body}
-      </div>
-      <div style="padding:24px 32px;border-top:1px solid #e8ebd8;">
-        <p style="margin:0;font-size:12px;color:#7c8a48;">
+      <div style="background:#363b25;border-radius:0 0 10px 10px;padding:32px 40px;font-family:Arial,Helvetica,sans-serif;">
+        <p style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#d2d8b3;">Impacting the world in our own small ways.</p>
+        <p style="margin:0 0 10px;font-size:12px;line-height:1.7;color:#b3bd85;">
           Turning Olive Charity &middot; La, Accra, Ghana<br/>
-          <a href="{{ unsubscribe }}" style="color:#7c8a48;">Unsubscribe</a>
+          <a href="mailto:info@turningolive.org" style="color:#b3bd85;">info@turningolive.org</a>
+        </p>
+        <p style="margin:0;font-size:12px;">
+          <a href="https://www.instagram.com/olive.charity_2025" target="_blank" rel="noopener noreferrer" style="color:#dd9a63;text-decoration:none;">Follow us on Instagram</a>
+          <span style="color:#626d38;"> &middot; </span>
+          <a href="{{ unsubscribe }}" style="color:#8a9463;">Unsubscribe</a>
         </p>
       </div>
     </div>
