@@ -161,7 +161,7 @@ function RibbonButton({
 
 function RibbonGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-1 border-r border-olive-200 px-2.5 py-1 last:border-r-0">
+    <div className="flex flex-col items-center gap-1 border-r border-transparent px-2.5 py-1">
       <div className="flex flex-wrap items-center justify-center gap-0.5">{children}</div>
       <span className="text-[9px] font-semibold uppercase tracking-wider text-olive-400">{label}</span>
     </div>
@@ -815,7 +815,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
       <div className="mt-5 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-8">
         <div className={mobileTab === "edit" ? "block" : "hidden lg:block"}>
           {/* Ribbon toolbar */}
-          <div className="sticky top-2 z-10 flex flex-wrap items-start rounded-t-2xl border border-b-0 border-olive-200 bg-cream-100 px-2 pt-1.5 shadow-sm">
+          <div className="sticky top-2 z-10 flex flex-wrap items-start rounded-t-2xl border border-b-0 border-transparent bg-cream-100 px-2 pt-1.5 shadow-sm">
             <RibbonGroup label="Undo">
               <RibbonButton label="Undo" onClick={() => exec("undo")}>
                 <Undo2 size={15} />
@@ -939,7 +939,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
           </div>
 
           {/* Document canvas */}
-          <div className="rounded-b-2xl border border-olive-200/70 bg-white p-6 shadow-sm sm:p-10">
+          <div className="border border-transparent bg-white p-6 shadow-md sm:p-10">
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
@@ -1211,10 +1211,13 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
             </div>
           </div>
 
-          <p className="mt-2 px-1 text-xs text-olive-400">
-            {wordCount} word{wordCount === 1 ? "" : "s"} &middot; {charCount} character
-            {charCount === 1 ? "" : "s"}
-          </p>
+          <div className="flex items-center justify-between rounded-b-2xl border-t border-olive-100 bg-cream-50 px-6 py-2 shadow-md sm:px-10">
+            <p className="text-xs text-olive-500">
+              {wordCount} word{wordCount === 1 ? "" : "s"} &middot; {charCount} character
+              {charCount === 1 ? "" : "s"}
+            </p>
+            <p className="text-xs text-olive-400">Turning Olive Charity</p>
+          </div>
 
           {stage === "error" && (
             <div className="mt-3 flex items-center gap-2 text-sm font-medium text-terracotta-600">
