@@ -24,9 +24,11 @@
   --color-cream-300: #e9dcc0;
 
   /* Terracotta accent */
+  --color-terracotta-300: #eebb8c;
   --color-terracotta-400: #dd9a63;
   --color-terracotta-500: #c9793f;
   --color-terracotta-600: #ab6030;
+  --color-terracotta-700: #8f4a22;
 }
 
 @theme inline {
@@ -50,9 +52,11 @@
   --color-cream-200: var(--color-cream-200);
   --color-cream-300: var(--color-cream-300);
 
+  --color-terracotta-300: var(--color-terracotta-300);
   --color-terracotta-400: var(--color-terracotta-400);
   --color-terracotta-500: var(--color-terracotta-500);
   --color-terracotta-600: var(--color-terracotta-600);
+  --color-terracotta-700: var(--color-terracotta-700);
 
   --font-sans: var(--font-inter);
   --font-serif: var(--font-fraunces);

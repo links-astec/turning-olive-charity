@@ -944,7 +944,7 @@ export default function NewsletterComposer({ subscriberCount }: { subscriberCoun
                   onMoveDown: () => moveBlock(block.id, 1),
                   onDelete: () => deleteBlock(block.id),
                 };
-                const activeRing = activeBlockId === block.id ? "ring-1 ring-terracotta-200" : "";
+                const activeRing = activeBlockId === block.id ? "ring-1 ring-terracotta-400/40" : "";
 
                 if (block.type === "heading") {
                   return (
