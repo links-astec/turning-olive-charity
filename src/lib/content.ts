@@ -42,8 +42,10 @@ export const siteInfo = {
 };
 
 export const donationInfo = {
-  momoNumber: "+233 57 606 0057",
-  momoNetwork: "MTN Mobile Money",
+  momoAccounts: [
+    { network: "MTN Mobile Money", number: "+233 57 606 0057" },
+    { network: "Telecel Cash", number: "0201128372" },
+  ],
   bankAccount: null as string | null,
 };
 

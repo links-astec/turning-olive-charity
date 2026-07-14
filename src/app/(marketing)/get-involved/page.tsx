@@ -61,12 +61,14 @@ export default function GetInvolvedPage() {
 
           <Reveal delay={0.1}>
             <div className="space-y-4 rounded-3xl border border-olive-200/70 bg-cream-50 p-8 shadow-lg shadow-olive-900/5">
-              <div>
-                <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-terracotta-600">
-                  <Smartphone size={14} /> {donationInfo.momoNetwork}
-                </span>
-                <CopyField value={donationInfo.momoNumber} />
-              </div>
+              {donationInfo.momoAccounts.map((account) => (
+                <div key={account.network}>
+                  <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-terracotta-600">
+                    <Smartphone size={14} /> {account.network}
+                  </span>
+                  <CopyField value={account.number} />
+                </div>
+              ))}
 
               <div>
                 <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-terracotta-600">
