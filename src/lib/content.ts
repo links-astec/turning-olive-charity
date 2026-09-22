@@ -107,9 +107,9 @@ export const programs: Program[] = [
 ];
 
 export const board: BoardMember[] = [
-  { name: "Sylvia Atswei Deesah Adjetey", role: "Founder", initials: "SA" },
-  { name: "Nana Baffoe Abbam", role: "Executive Director", initials: "NB" },
-  { name: "Aaron Akusem Akutteh", role: "Executive Director", initials: "AA" },
+  { name: "Engr. Sylvia Atswei Deesah Adjetey", role: "Founder", initials: "SA" },
+  { name: "Engr. Nana Baffoe Abbam", role: "Executive Director", initials: "NB" },
+  { name: "Ing. Aaron Akusem Akutteh", role: "Executive Director", initials: "AA" },
   { name: "Jennifer Pendeland Bruce", role: "Board Secretary", initials: "JB" },
 ];
 
