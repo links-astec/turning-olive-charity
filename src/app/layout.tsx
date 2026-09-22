@@ -102,7 +102,12 @@ export default function RootLayout({
       addressLocality: "La, Accra",
       addressCountry: "GH",
     },
-    sameAs: ["https://www.instagram.com/olive.charity_2025"],
+    sameAs: [
+      "https://www.instagram.com/olive.charity_2025",
+      "https://www.facebook.com/share/1BeWT6eQAS/",
+      "https://www.tiktok.com/@turning.olive.cha",
+      "https://www.linkedin.com/company/turning-olive-charity/",
+    ],
   };
 
   return (

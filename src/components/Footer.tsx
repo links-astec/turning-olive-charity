@@ -13,6 +13,53 @@ function InstagramIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function FacebookIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" {...props}>
+      <rect x="2.5" y="2.5" width="19" height="19" rx="6" stroke="currentColor" strokeWidth={1.7} />
+      <path
+        d="M13.6 21v-7.2h2.4l.36-2.8h-2.76V9.2c0-.81.22-1.36 1.39-1.36h1.48V5.3a19.8 19.8 0 0 0-2.16-.11c-2.14 0-3.6 1.3-3.6 3.7v2.11H8.2v2.8h2.41V21"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function LinkedInIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" {...props}>
+      <rect x="2.5" y="2.5" width="19" height="19" rx="6" stroke="currentColor" strokeWidth={1.7} />
+      <path d="M7.8 10.2v7" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+      <circle cx="7.8" cy="7.3" r="1" fill="currentColor" />
+      <path
+        d="M11.5 17.2v-4.1c0-1.6 1-2.6 2.3-2.6 1.3 0 2 .9 2 2.6v4.1"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M11.5 10.2v7" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TiktokIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" {...props}>
+      <path
+        d="M16.5 3.5c.5 2.2 2 3.7 4.2 4v3c-1.6 0-3-.4-4.2-1.2v6.4a5.7 5.7 0 1 1-5.7-5.7c.3 0 .6 0 .9.06v3.1a2.6 2.6 0 1 0 1.8 2.5V3.5h3Z"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const exploreLinks = [
   { href: "/about", label: "About Us" },
   { href: "/programs", label: "Programs" },
@@ -59,6 +106,33 @@ export default function Footer() {
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-olive-700 text-olive-200 transition-colors hover:border-terracotta-500 hover:bg-terracotta-500 hover:text-cream-50"
               >
                 <InstagramIcon width={18} height={18} />
+              </a>
+              <a
+                href="https://www.facebook.com/share/1BeWT6eQAS/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-olive-700 text-olive-200 transition-colors hover:border-terracotta-500 hover:bg-terracotta-500 hover:text-cream-50"
+              >
+                <FacebookIcon width={18} height={18} />
+              </a>
+              <a
+                href="https://www.tiktok.com/@turning.olive.cha"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-olive-700 text-olive-200 transition-colors hover:border-terracotta-500 hover:bg-terracotta-500 hover:text-cream-50"
+              >
+                <TiktokIcon width={18} height={18} />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/turning-olive-charity/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-olive-700 text-olive-200 transition-colors hover:border-terracotta-500 hover:bg-terracotta-500 hover:text-cream-50"
+              >
+                <LinkedInIcon width={18} height={18} />
               </a>
             </div>
           </div>
