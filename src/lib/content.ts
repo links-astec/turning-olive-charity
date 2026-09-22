@@ -142,3 +142,117 @@ export const blogPosts: BlogPost[] = [
     image: "/images/anniversary-celebration.jpg",
   },
 ];
+
+export type UpdateType = "donation" | "flyer" | "announcement";
+export type UpdateStatus = "current" | "past";
+
+export type CommunityUpdate = {
+  slug: string;
+  type: UpdateType;
+  status: UpdateStatus;
+  title: string;
+  description: string;
+  date: string;
+  image: string;
+};
+
+export const communityUpdates: CommunityUpdate[] = [
+  {
+    slug: "donation-drive-2026-main",
+    type: "flyer",
+    status: "current",
+    title: "Giving Hope & Care — 2026 Donation Drive",
+    description:
+      "A call for donations ahead of our outreach at the Ashanti School for the Deaf/Blind — teaching materials, sports equipment, renovation supplies, and food items.",
+    date: "2026-11-27",
+    image: "/images/flyers/donation-drive-2026-main.jpg",
+  },
+  {
+    slug: "call-for-volunteers-2026",
+    type: "announcement",
+    status: "current",
+    title: "Call for Volunteers",
+    description:
+      "Turning Olive Charity is looking for volunteers across community outreach, youth programs, media, and event support.",
+    date: "2026-08-06",
+    image: "/images/flyers/call-for-volunteers-2026.jpg",
+  },
+  {
+    slug: "kumasi-donation-2025-02-22",
+    type: "donation",
+    status: "past",
+    title: "Kumasi Children's Home Donation Drive",
+    description:
+      "Clothing, food, and household essentials delivered to Kumasi Children's Home, alongside a hands-on baking skills workshop.",
+    date: "2025-02-22",
+    image: "/images/flyers/kumasi-donation-2025-02-22.jpg",
+  },
+  {
+    slug: "support-2026-donation-drive-letter",
+    type: "announcement",
+    status: "current",
+    title: "Support Our 2026 Donation Drive — Official Letter",
+    description:
+      "Our formal appeal for the Nov 27 outreach at the Ashanti School for the Deaf/Blind, with the school's most urgent needs.",
+    date: "2026-08-03",
+    image: "/images/flyers/support-2026-donation-drive-letter.jpg",
+  },
+  {
+    slug: "ngo-registration-announcement",
+    type: "announcement",
+    status: "current",
+    title: "Big Announcement: Now Registered as Turning Olive Charity",
+    description: "Olive Charity is officially registered as an NGO under the name Turning Olive Charity.",
+    date: "2026-08-03",
+    image: "/images/flyers/ngo-registration-announcement.jpg",
+  },
+  {
+    slug: "donation-drive-2026-teaching-learning",
+    type: "flyer",
+    status: "current",
+    title: "Donation Drive — Teaching & Learning Materials",
+    description:
+      "Computers, books, stationery, and other teaching essentials needed for the Nov 27 outreach at the Ashanti School for the Deaf/Blind.",
+    date: "2026-11-27",
+    image: "/images/flyers/donation-drive-2026-teaching-learning.jpg",
+  },
+  {
+    slug: "donation-drive-2026-sports",
+    type: "flyer",
+    status: "current",
+    title: "Donation Drive — Sports Equipment",
+    description:
+      "Footballs, jerseys, medals, and training gear needed for the Nov 27 outreach at the Ashanti School for the Deaf/Blind.",
+    date: "2026-11-27",
+    image: "/images/flyers/donation-drive-2026-sports.jpg",
+  },
+  {
+    slug: "donation-drive-2026-food",
+    type: "flyer",
+    status: "current",
+    title: "Donation Drive — Food & Provisions",
+    description:
+      "Rice, oil, canned foods, and other provisions needed for the Nov 27 outreach at the Ashanti School for the Deaf/Blind.",
+    date: "2026-11-27",
+    image: "/images/flyers/donation-drive-2026-food.jpg",
+  },
+  {
+    slug: "donation-drive-2026-renovation",
+    type: "flyer",
+    status: "current",
+    title: "Donation Drive — Renovation Materials",
+    description:
+      "Cement, paint, water tanks, and other renovation supplies needed for the Nov 27 outreach at the Ashanti School for the Deaf/Blind.",
+    date: "2026-11-27",
+    image: "/images/flyers/donation-drive-2026-renovation.jpg",
+  },
+  {
+    slug: "founders-story-letter",
+    type: "announcement",
+    status: "current",
+    title: "Founder's Story — How Turning Olive Charity Began",
+    description: "The full letter from our founder on the journey from a simple act of giving to Turning Olive Charity.",
+    date: "2026-08-01",
+    image: "/images/flyers/founders-story-letter.jpg",
+  },
+];

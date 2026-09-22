@@ -3,7 +3,8 @@ import { ArrowRight } from "lucide-react";
 import { Button, PageHero, ProgramIcon } from "@/components/ui";
 import { PhotoPanel } from "@/components/decor";
 import { Reveal } from "@/components/motion";
-import { programs } from "@/lib/content";
+import { CommunityUpdatesCatalogue } from "@/components/CommunityUpdates";
+import { communityUpdates, programs } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Programs | Turning Olive Charity",
@@ -47,6 +48,8 @@ export default function ProgramsPage() {
           ))}
         </div>
       </section>
+
+      <CommunityUpdatesCatalogue updates={communityUpdates} />
 
       <Reveal className="mx-auto max-w-4xl px-6 pb-24 text-center">
         <h2 className="text-balance font-serif text-3xl font-medium text-olive-950 sm:text-4xl">

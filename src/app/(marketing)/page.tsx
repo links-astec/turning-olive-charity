@@ -4,7 +4,8 @@ import { PhotoPanel, OliveBranch } from "@/components/decor";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion";
 import NameChangeNotice from "@/components/NameChangeNotice";
 import NewsletterSignup from "@/components/NewsletterSignup";
-import { blogPosts, founderMessage, programs, siteInfo } from "@/lib/content";
+import { CommunityUpdatesTeaser } from "@/components/CommunityUpdates";
+import { blogPosts, communityUpdates, founderMessage, programs, siteInfo } from "@/lib/content";
 
 const pillars = [
   { label: "Skills-First", caption: "Our approach" },
@@ -204,6 +205,8 @@ export default function Home() {
           </RevealGroup>
         </div>
       </section>
+
+      <CommunityUpdatesTeaser updates={communityUpdates} />
 
       <section className="mx-auto max-w-3xl px-6 py-24">
         <Reveal>
