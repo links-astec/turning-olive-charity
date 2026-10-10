@@ -64,12 +64,12 @@ export default function AboutPage() {
           <Reveal>
             <div className="grid grid-cols-1 gap-10 rounded-[2rem] border border-olive-200/70 bg-cream-50 p-8 shadow-lg shadow-olive-900/5 sm:p-12 lg:grid-cols-[1fr_1.6fr] lg:items-start">
               <div className="text-center lg:text-left">
-                <div className="mx-auto h-32 w-32 overflow-hidden rounded-full shadow-lg shadow-olive-900/10 lg:mx-0">
+                <div className="mx-auto h-48 w-48 overflow-hidden rounded-full shadow-lg shadow-olive-900/10 sm:h-60 sm:w-60 lg:mx-0">
                   <Image
                     src={founderMessage.image}
                     alt={founderMessage.name}
-                    width={320}
-                    height={320}
+                    width={480}
+                    height={480}
                     className="h-full w-full object-cover"
                   />
                 </div>
