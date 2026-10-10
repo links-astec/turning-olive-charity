@@ -84,8 +84,8 @@ export default function Home() {
         <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
           <Reveal className="relative aspect-[4/3] w-full">
             <PhotoPanel
-              src="/images/distribution-day.jpg"
-              alt="Clothing and essentials distribution day"
+              src="/images/kumasi-donation-celebration.png"
+              alt="Celebrating a donation day at Kumasi Children's Home"
               className="blob-mask-alt h-full w-full"
             />
           </Reveal>
