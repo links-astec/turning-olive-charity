@@ -15,6 +15,7 @@ export type BoardMember = {
   name: string;
   role: string;
   initials: string;
+  image?: string;
 };
 
 export type BlogPost = {
@@ -30,8 +31,8 @@ export const siteInfo = {
   name: "Turning Olive Charity",
   shortName: "Olive Charity",
   registration: "GL-003-7942",
-  slogan: "Impacting the world in our own small ways.",
-  tagline: "Impacting the world in our own small ways.",
+  slogan: "Impacting lives positively in our own small ways.",
+  tagline: "Impacting lives positively in our own small ways.",
   mission:
     "To help in humanitarian, social and environmental issues, capacity building and advocating for economic change through donation, grants and sponsorship.",
   vision:
@@ -109,7 +110,12 @@ export const programs: Program[] = [
 ];
 
 export const board: BoardMember[] = [
-  { name: "Engr. Sylvia Atswei Deesah Adjetey", role: "Founder", initials: "SA" },
+  {
+    name: "Engr. Sylvia Atswei Deesah Adjetey",
+    role: "Founder",
+    initials: "SA",
+    image: "/images/founder-sylvia.png",
+  },
   { name: "Engr. Nana Baffoe Abbam", role: "Executive Director", initials: "NB" },
   { name: "Ing. Aaron Akusem Akutteh", role: "Executive Director", initials: "AA" },
   { name: "Jennifer Pendeland Bruce", role: "Board Secretary", initials: "JB" },

@@ -269,7 +269,7 @@ export function renderNewsletterHtml(subject: string, blocks: NewsletterBlock[])
         </div>
       </div>
       <div style="background:#363b25;border-radius:0 0 10px 10px;padding:32px 40px;font-family:Arial,Helvetica,sans-serif;">
-        <p style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#d2d8b3;">Impacting the world in our own small ways.</p>
+        <p style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#d2d8b3;">Impacting lives positively in our own small ways.</p>
         <p style="margin:0 0 10px;font-size:12px;line-height:1.7;color:#b3bd85;">
           Turning Olive Charity &middot; La, Accra, Ghana<br/>
           <a href="mailto:info@turningolive.org" style="color:#b3bd85;">info@turningolive.org</a>
