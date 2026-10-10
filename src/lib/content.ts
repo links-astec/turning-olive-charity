@@ -135,7 +135,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "the-olive-charity-project",
-    title: "The Olive Charity Project: A Day of Giving and Celebration",
+    title: "The Turning Olive Charity Project: A Day of Giving and Celebration",
     excerpt:
       "Distribution, baking, and a shared cake with the community at Kumasi Children's Home — a day that captured what Turning Olive Charity is all about.",
     date: "2025-02-22",
