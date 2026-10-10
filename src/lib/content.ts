@@ -70,6 +70,7 @@ export const founderMessage = {
   name: "Engr. Sylvia Atswei Deesah Adjetey",
   role: "Founder, Turning Olive Charity",
   initials: "SA",
+  image: "/images/founder-sylvia.png",
   pullQuote:
     "Today, Turning Olive Charity is more than just about clothes. It's about dignity, sustainability, and compassion. It's about turning simple acts of giving into olive branches of hope.",
   paragraphs: [
@@ -103,7 +104,7 @@ export const programs: Program[] = [
     description:
       "Led by our founder, a certified baker, these workshops teach real, marketable baking skills — so that beneficiaries gain more than a handout. They gain a trade that can provide food security and a path to financial independence.",
     icon: "chefHat",
-    image: "/images/baking-workshop-kids-1.jpg",
+    image: "/images/baking-workshop-kneading.png",
   },
 ];
 

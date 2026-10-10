@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Compass, GraduationCap, HeartHandshake } from "lucide-react";
 import { Button, PageHero, SectionHeading } from "@/components/ui";
 import { PhotoPanel } from "@/components/decor";
@@ -63,8 +64,14 @@ export default function AboutPage() {
           <Reveal>
             <div className="grid grid-cols-1 gap-10 rounded-[2rem] border border-olive-200/70 bg-cream-50 p-8 shadow-lg shadow-olive-900/5 sm:p-12 lg:grid-cols-[1fr_1.6fr] lg:items-start">
               <div className="text-center lg:text-left">
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-olive-400 via-olive-500 to-olive-700 font-serif text-2xl font-medium text-cream-50 shadow-lg shadow-olive-900/10 lg:mx-0">
-                  {founderMessage.initials}
+                <div className="mx-auto h-32 w-32 overflow-hidden rounded-full shadow-lg shadow-olive-900/10 lg:mx-0">
+                  <Image
+                    src={founderMessage.image}
+                    alt={founderMessage.name}
+                    width={320}
+                    height={320}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <p className="mt-4 font-serif text-lg font-medium text-olive-950">
                   {founderMessage.name}
